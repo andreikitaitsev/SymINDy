@@ -98,6 +98,9 @@ def my_eaSimple(population, toolbox_local, cxpb, mutpb, ngen, stats=None, hallof
 
     # Evaluate the individuals with an invalid fitness ? invalid fitness means that the fitness value will be different after the eaSimple
     # and not that the fitness function is invalid and cannot be calculaed on these individuals afterwords?
+    
+    # Matteo: exactly. Also this line here computes the fintess for all the individuals, since it's generation "0". But if you look inside the for loop
+    # you have "# Evaluate the individuals with an invalid fitness". There you evaluate the fitness of the new individuals in the new generation.
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
     fitnesses = toolbox_local.map(toolbox_local.evaluate, invalid_ind)
     for ind, fit in zip(invalid_ind, fitnesses):
@@ -142,11 +145,23 @@ def my_eaSimple(population, toolbox_local, cxpb, mutpb, ngen, stats=None, hallof
     return population, logbook
 
 #? why x[1]? What is x?
+
+# Matteo: In a classical mechanics perspective, x is the state which is a vector containing position and velocity.
+# By putting this together Newton's second law leads to a first order ordinary differential equation.
+# And the derivative of the state vector has the velocity as first component (the velocity is the derivative of the position),
+# and the acceleration as second component (this in the case in which the position vector is 1D).
+# But as disccused during our call, our package doesn't really care about this, it gets data and recostructs symbolic first order odes.
+# So it's the user responsibility to do this.
 def dxdt(t, x):
     dxdt_vector = [x[1], -k*x[0] - c*x[1] + F0*np.sin(omega*t)]
     return dxdt_vector
 
 #? What is i: time point index?
+
+# This is a really bad way of implementing it. Reeeeally bad, but again the package should not contain this (maybe in a test suit, but not in the src (source) directory).
+# i is the component of the state vector, so if you look below is 0 for position and 1 for velocity.
+# But calling this function for each observation time, instead of propagating and save the necessary times is really stupid. 
+# This was me playing with python during my first month of using it. 
 def observedstate(t, i):
     state_history = solve_ivp(dxdt, y0=x0_nominal, t_span=[t_start, t], rtol=reltol, atol=abstol).y
     final_state = state_history[i, -1]
@@ -158,8 +173,9 @@ def observedstate(t, i):
 # Define constants
 ntrees = 5  # Number of trees defining an individual
 nc = 1  # Number of symbolic constants associated to the individual.
-dimensions = 1  # What's the size of the velocity vector?
-size_input = 1 + nc  # dimensions*2 + 1 + nc
+dimensions = 1  # What's the size of the velocity vector? Matteo: this input should change: the question for the user should be "what is the size of the state vector"? About this
+# add documentation related to the messages shared by Matteo on whatsapp on the 21st January 2021.
+size_input = 1 + nc  # dimensions*2 + 1 + nc 
 intypes = []
 for i in range(size_input):
     intypes.append(float)
@@ -177,7 +193,7 @@ pset.renameArguments(ARG1='p1')
 # ... add time as an independent variable, if necessary
 # pset.renameArguments(ARG2='t')
 
-#? General question about fitness in DEAP: are weights multiplied with the fitness values?
+#? General question about fitness in DEAP: are weights multiplied with the fitness values? Yes, the minus one is just to let the algo know we are interested in a minimization, if I recally correctly.
 creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
 creator.create("Subindividual", gp.PrimitiveTree)
 creator.create("Individual", list, fitness=creator.FitnessMin)
@@ -235,7 +251,9 @@ x_true = solve_ivp(dxdt, y0=x0_nominal, t_span=[t_true[0], t_true[-1]], t_eval=t
 acc_true = dxdt(t_true, x_true)[1]
 posvelacc_true = np.vstack([x_true, acc_true])
 
-#? why this sequence?
+#? why this sequence? 
+# Random, I was just playing. Again, this is an input from the user.
+
 time_rec_obs = [time for time in [0.1, 0.3, 0.8, 1, 1.7, 3, 4, 4.3, 5, 6, 7, 8, 8.4, 9.5, 10.8, 11, 11.5, 13, 15, 18, 19, 19.3, 19.8, 20, 21.3, 22, 24]]
 half_dt_obs = 0.01
 time_obs = []
@@ -264,6 +282,7 @@ x_train = [position_rec_obs, velocity_rec_obs, time_rec_obs]
 x_train = np.asarray(x_train).transpose()
 
 #? why do we set time record obesrvations to 1?
+# Here the state is not only position and velocity x = [p, v], but also time, x = [p, v, t], so that its derivative with respect to time is \dot{x} = [v, \dot{v}, 1]
 x_dot_train = [velocity_rec_obs, acc_rec_obs, np.ones(len(time_rec_obs)).tolist()]
 x_dot_train = np.asarray(x_dot_train).transpose()
 
@@ -296,12 +315,15 @@ def evalSymbReg(individual, flag_solution=0):
         # Solution: wrap kwargs in a dict
         x_eval_sim = model.simulate(x_train[0], time_rec_obs, {'rtol':reltol, 'atol':abstol})
         #? why do we not include F0sin(omega t) in the fitness?
+        # Not sure what you mean. The fitness is computed agains the state history propagated with the trained model (which ideally also has that term in it).
+        # So in a sense it is included.
         fitness = simps(np.square((x_eval_sim.transpose()[0]-position_rec_obs)/np.max(position_rec_obs)) + \
             np.square((x_eval_sim.transpose()[1]-velocity_rec_obs)/np.max(velocity_rec_obs)), x=time_rec_obs)
         return fitness
  
     if flag_solution == 0:
         #? why do we multiply random.random() by 10?
+        # Just a guess on the domain of the nonlinear parameter. I think we can remove this nonlinear parameters estimation part, for now.
         OptResults = optimize.minimize(coeff_estimation, random.random()*10, tol=1e-2, options={"maxiter": 10})
     else:
         OptResults = optimize.differential_evolution(coeff_estimation, [(0, 10)], maxiter = 100, seed=seed, disp=True)
@@ -341,6 +363,7 @@ def evalSymbReg(individual, flag_solution=0):
                            atol=abstol).y
 
         #? why do we append t_start to x0_test?
+        # See comment above about the inclusion of time in the state.
         x0_test.append(t_start)
         x0_test = np.asarray(x0_test)
 
@@ -472,3 +495,5 @@ if __name__ == "__main__":
 
 #? When running the script, there is a warning:
 #UserWarning: Control variables u were ignored because control variables were not used when the model was fit
+
+# I will need to check this, not sure.
