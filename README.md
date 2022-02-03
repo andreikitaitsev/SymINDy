@@ -7,3 +7,17 @@
 - Publish paper on JOSS
 - Publish video tutorial on Youtube
 - Ask to be mentioned in the related packages [here](https://github.com/dynamicslab/pysindy)
+
+## Notes
+
+This software is based on the one used [here](https://www.researchgate.net/publication/344475621_Orbital_Anomaly_Reconstruction_Using_Deep_Symbolic_Regression?_sg%5B0%5D=0wBU1i2FuNFv7GrI5tBwlNlsXa1lTJSK3rr_wah32-TZA0DthKdFWvdgDnhpa4j9zw4oxvvYCXRlm-dut4Ex33DScJfQ7oLG-5lmh-vk.qBVh3aGjqIRH7w-Nv8p7oDqT05hMsVnx7MgIomyCJsV_xdfT0YrIb-Tjm2I3-AnyS49FuI-t7qR0m5asIPW71g).
+
+It combines [deap](https://deap.readthedocs.io/en/master/) with [PySINDy](https://pysindy.readthedocs.io/en/latest/).
+
+SINDy is nice because it allows one to leverage linear ideas, while deap takes care of nonlinearities (to some extent).
+See also works by Brenden (LLNL) and Max Tegmark (MIT). Deep Symbolic Regression, AI Feynman.
+See also work by Facebook AI.
+
+Why this and not simply SINDy? Because here we can get functions like the norm, the cross product, the scalar product..functions acting on vectors. In this way we can for example reconstruct the equations of motion of a two-body problem, not sure how straightforward it is for SINDy to do it.
+
+Can we also do something with divergence? Gradient? Do we need measurements in space as well to compute the partials with finite difference? In this way we can have a bigger library.
