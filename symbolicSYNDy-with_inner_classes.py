@@ -1,5 +1,6 @@
 '''A sketch of general symbolicSYNDy class WITH inner classes'''
 
+
 # Functions
 class evolver(object):
 	
