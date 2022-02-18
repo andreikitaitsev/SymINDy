@@ -1,6 +1,8 @@
 '''
-This code fully reconstructs the differential equation xddot = -kx - cxdot + F0sin(omega t) from data using the Deep Symbolic Regression algorithm. 
-Here the system has dimensions dim*2+1 and the symbolic expressions are evaluated component-wise in the construction of the observables matrix, as in the SINDy algorithm.
+This code fully reconstructs the differential equation xddot = -kx - cxdot + F0sin(omega t)
+from data using the Deep Symbolic Regression algorithm. 
+Here the system has dimensions dim*2+1 and the symbolic expressions are evaluated
+component-wise in the construction of the observables matrix, as in the SINDy algorithm.
 
 IAC2020
 
@@ -56,7 +58,8 @@ def my_varAnd(population, toolbox_local, cxpb, mutpb):
         # for h_component in range(ntrees):
         if random.random() < cxpb:
             h_component = random.randint(0, ntrees-1) #where do we define ntrees?
-            offspring[i - 1][h_component], offspring[i][h_component] = toolbox_local.mate(offspring[i - 1][h_component], offspring[i][h_component])
+            offspring[i - 1][h_component], offspring[i][h_component] = toolbox_local.mate(\
+                offspring[i - 1][h_component], offspring[i][h_component])
             del offspring[i - 1].fitness.values, offspring[i].fitness.values
 
     for i in range(len(offspring)):
@@ -96,11 +99,7 @@ def my_eaSimple(population, toolbox_local, cxpb, mutpb, ngen, stats=None, hallof
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
 
-    # Evaluate the individuals with an invalid fitness ? invalid fitness means that the fitness value will be different after the eaSimple
-    # and not that the fitness function is invalid and cannot be calculaed on these individuals afterwords?
-    
-    # Matteo: exactly. Also this line here computes the fintess for all the individuals, since it's generation "0". But if you look inside the for loop
-    # you have "# Evaluate the individuals with an invalid fitness". There you evaluate the fitness of the new individuals in the new generation.
+    # Evaluate the fitness of the first population
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
     fitnesses = toolbox_local.map(toolbox_local.evaluate, invalid_ind)
     for ind, fit in zip(invalid_ind, fitnesses):
@@ -144,68 +143,39 @@ def my_eaSimple(population, toolbox_local, cxpb, mutpb, ngen, stats=None, hallof
                 print(halloffame[0][i])
     return population, logbook
 
-#? why x[1]? What is x?
-
-# Matteo: In a classical mechanics perspective, x is the state which is a vector containing position and velocity.
-# By putting this together Newton's second law leads to a first order ordinary differential equation.
-# And the derivative of the state vector has the velocity as first component (the velocity is the derivative of the position),
-# and the acceleration as second component (this in the case in which the position vector is 1D).
-# But as disccused during our call, our package doesn't really care about this, it gets data and recostructs symbolic first order odes.
-# So it's the user responsibility to do this.
-def dxdt(t, x):
-    dxdt_vector = [x[1], -k*x[0] - c*x[1] + F0*np.sin(omega*t)]
-    return dxdt_vector
-
-#? What is i: time point index?
-
-# This is a really bad way of implementing it. Reeeeally bad, but again the package should not contain this (maybe in a test suit, but not in the src (source) directory).
-# i is the component of the state vector, so if you look below is 0 for position and 1 for velocity.
-# But calling this function for each observation time, instead of propagating and save the necessary times is really stupid. 
-# This was me playing with python during my first month of using it. 
-def observedstate(t, i):
-    state_history = solve_ivp(dxdt, y0=x0_nominal, t_span=[t_start, t], rtol=reltol, atol=abstol).y
-    final_state = state_history[i, -1]
-    return final_state
 
 ### II.Configure DEAP
 
-## II.1.DEAP primitive set
+## II.1. primitive set
 # Define constants
 ntrees = 5  # Number of trees defining an individual
 nc = 1  # Number of symbolic constants associated to the individual.
-dimensions = 1  # What's the size of the velocity vector? Matteo: this input should change: the question for the user should be "what is the size of the state vector"? About this
-# add documentation related to the messages shared by Matteo on whatsapp on the 21st January 2021.
+dimensions = 1  
+# 
 size_input = 1 + nc  # dimensions*2 + 1 + nc 
-intypes = []
-for i in range(size_input):
-    intypes.append(float)
+intypes = [float for i in range(size_input)]
 
-pset = gp.PrimitiveSetTyped("MAIN", intypes, float)
+# in the future construc a library
+pset = gp.PrimitiveSetTyped("MAIN", intypes, float) # 1)name, 2)type of each input, 3)type of the output
 pset.addPrimitive(np.multiply, [float, float], float, name="mul")
-pset.addPrimitive(np.sin, [float], float, name="sin")
+pset.addPrimitive(np.sin, [float], float, name="sin") # 1 input, 1 output #?
 pset.addPrimitive(np.cos, [float], float, name="cos")
 pset.addPrimitive(np.square, [float], float, name="square")
-
-# objects:
 pset.renameArguments(ARG0='y')
-pset.renameArguments(ARG1='p1')
-
+pset.renameArguments(ARG1='p1') 
 # ... add time as an independent variable, if necessary
-# pset.renameArguments(ARG2='t')
-
-#? General question about fitness in DEAP: are weights multiplied with the fitness values? Yes, the minus one is just to let the algo know we are interested in a minimization, if I recally correctly.
-creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+# pset.renameArguments(ARG2='t') # user defined 
+creator.create("FitnessMin", base.Fitness, weights=(-1.0,)) # weights=-1 to indicate minimization
 creator.create("Subindividual", gp.PrimitiveTree)
 creator.create("Individual", list, fitness=creator.FitnessMin)
 
-## II.2. DEAP toolbox
+## II.2. toolbox
 toolbox = base.Toolbox()
-toolbox.register("expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2)
+toolbox.register("expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2) #? type_=pset.ret is the default of gp.genHalfAndHalf
 toolbox.register("subindividual", tools.initIterate, creator.Subindividual, toolbox.expr)
 toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.subindividual, n=ntrees)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("compile", gp.compile, pset=pset)
-
 toolbox.register("select", tools.selTournament, tournsize=2)
 
 def random_mating_operator(ind1, ind2):
@@ -225,66 +195,8 @@ def random_mutation_operator(individual):
         return gp.mutNodeReplacement(individual, pset=pset)
 
 toolbox.register("mate", random_mating_operator)
-toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=1)
+toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=1) #? never used
 toolbox.register("mutate", random_mutation_operator)
-
-
-### III. Define differential equaltion
-k = 4.518
-c = 0.376
-F0 = 8.865
-omega = 1.44
-
-x0 = 2
-x0dot = 3
-x0_nominal = [x0, x0dot]  # State vector here
-posvelacc0_measured = [x0, x0dot, dxdt(0, [x0, x0dot])[1]]
-
-reltol = 1e-3
-abstol = 1e-3
-delta_t = 0.1
-t_start = 0.0
-t_end = 25
-
-t_true = np.arange(t_start, t_end, delta_t)
-x_true = solve_ivp(dxdt, y0=x0_nominal, t_span=[t_true[0], t_true[-1]], t_eval=t_true, rtol=reltol, atol=abstol).y
-acc_true = dxdt(t_true, x_true)[1]
-posvelacc_true = np.vstack([x_true, acc_true])
-
-#? why this sequence? 
-# Random, I was just playing. Again, this is an input from the user.
-
-time_rec_obs = [time for time in [0.1, 0.3, 0.8, 1, 1.7, 3, 4, 4.3, 5, 6, 7, 8, 8.4, 9.5, 10.8, 11, 11.5, 13, 15, 18, 19, 19.3, 19.8, 20, 21.3, 22, 24]]
-half_dt_obs = 0.01
-time_obs = []
-for i in range(len(time_rec_obs)):
-    time_obs.append(time_rec_obs[i] - half_dt_obs)
-    time_obs.append(time_rec_obs[i] + half_dt_obs)
-
-position_obs = [observedstate(t, 0) for t in time_obs]
-velocity_obs = [observedstate(t, 1) for t in time_obs]
-
-# For the state, now interpolate:
-position_rec_obs = []
-for i in range(len(time_rec_obs)):
-    position_rec_obs.append((position_obs[2*i]+position_obs[2*i+1])/2.0)
-
-velocity_rec_obs = []
-for i in range(len(time_rec_obs)):
-    velocity_rec_obs.append((velocity_obs[2 * i] + velocity_obs[2 * i + 1]) / 2.0)
-
-# For the acceleration, for now finite difference:
-acc_rec_obs = []
-for i in range(len(time_rec_obs)):
-    acc_rec_obs.append((velocity_obs[2*i+1]-velocity_obs[2*i])/(2.0*half_dt_obs))
-
-x_train = [position_rec_obs, velocity_rec_obs, time_rec_obs]
-x_train = np.asarray(x_train).transpose()
-
-#? why do we set time record obesrvations to 1?
-# Here the state is not only position and velocity x = [p, v], but also time, x = [p, v, t], so that its derivative with respect to time is \dot{x} = [v, \dot{v}, 1]
-x_dot_train = [velocity_rec_obs, acc_rec_obs, np.ones(len(time_rec_obs)).tolist()]
-x_dot_train = np.asarray(x_dot_train).transpose()
 
 ## IV. Initialize PYSINDY:
 model = ps.SINDy()
@@ -298,38 +210,45 @@ def evalSymbReg(individual, flag_solution=0):
     for i in range(ntrees):
         sr_functions.append(toolbox.compile(expr=individual[i]))
 
-    def coeff_estimation(p):
+    library = ps.CustomLibrary(library_functions=sr_functions)
+    model = ps.SINDy(feature_library=library)
+    model.fit(x_train, t=np.array(time_rec_obs), x_dot=x_dot_train)
+    #def coeff_estimation(p):
+        '''p - nonlinear parameters (nc)'''
         # P Y S I N D Y
+        #! Check out!
         # BUG: the lambda function is overwriting inside the for loop.
-        local_sr_functions=[]
-        for i in range(ntrees):
-            fn = lambda x: sr_functions[i](x, *p)
-            local_sr_functions.append(fn)
+     #   local_sr_functions=[]
+     #   for i in range(ntrees):
+    #      fn = lambda x: sr_functions[i](x, *p)
+     #       local_sr_functions.append(copy.deepcopy(fn))
 
-        custom_library = ps.CustomLibrary(library_functions=local_sr_functions)
-        library = poly_library + custom_library
-        model = ps.SINDy(feature_library=library)
-        model.fit(x_train, t=np.array(time_rec_obs), x_dot=x_dot_train)
+     #   custom_library = ps.CustomLibrary(library_functions=sr_functions)
+        # poly lib is "included" in deap
+     #   library = poly_library + custom_library
+        
         
         # BUG: TypeError: simulate() got an unexpected keyword argument 'rtol'
         # Solution: wrap kwargs in a dict
-        x_eval_sim = model.simulate(x_train[0], time_rec_obs, {'rtol':reltol, 'atol':abstol})
+        #x_eval_sim = model.simulate(x_train[0], time_rec_obs, {'rtol':reltol, 'atol':abstol})
         #? why do we not include F0sin(omega t) in the fitness?
         # Not sure what you mean. The fitness is computed agains the state history propagated with the trained model (which ideally also has that term in it).
         # So in a sense it is included.
-        fitness = simps(np.square((x_eval_sim.transpose()[0]-position_rec_obs)/np.max(position_rec_obs)) + \
-            np.square((x_eval_sim.transpose()[1]-velocity_rec_obs)/np.max(velocity_rec_obs)), x=time_rec_obs)
-        return fitness
+        #! Use R of thresholded least square
+        fitness = - model.score(x_train, t=np.array(time_rec_obs), x_dot=x_dot_train)
+        #fitness = simps(np.square((x_eval_sim.transpose()[0]-position_rec_obs)/np.max(position_rec_obs)) + \
+        #    np.square((x_eval_sim.transpose()[1]-velocity_rec_obs)/np.max(velocity_rec_obs)), x=time_rec_obs)
+#        return fitness
  
-    if flag_solution == 0:
-        #? why do we multiply random.random() by 10?
-        # Just a guess on the domain of the nonlinear parameter. I think we can remove this nonlinear parameters estimation part, for now.
-        OptResults = optimize.minimize(coeff_estimation, random.random()*10, tol=1e-2, options={"maxiter": 10})
-    else:
-        OptResults = optimize.differential_evolution(coeff_estimation, [(0, 10)], maxiter = 100, seed=seed, disp=True)
+#    if flag_solution == 0:
+#        #? why do we multiply random.random() by 10?
+#        # Just a guess on the domain of the nonlinear parameter. I think we can remove this nonlinear parameters estimation part, for now.
+#        OptResults = optimize.minimize(coeff_estimation, random.random()*10, tol=1e-2, options={"maxiter": 10})
+#    else:
+#        OptResults = optimize.differential_evolution(coeff_estimation, [(0, 10)], maxiter = 100, seed=seed, disp=True)
          
-    k_array = OptResults.x
-    fitness = OptResults.fun
+#   k_array = OptResults.x
+#   fitness = OptResults.fun
 
     if flag_solution == 1:
         print('Constants:')
@@ -407,6 +326,70 @@ toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max
 
 xlabel = r"$t \ [s]$"
 ylabels = [r"$x \ [m]$", r"$\dot{x} \ [m/s]$", r"$\ddot{x} \ [m/s^2]$"]
+
+### III. Simulate differential equation
+def simulate_neuton_second_law():
+    def _dxdt(t, x):
+        dxdt_vector = [x[1], -k*x[0] - c*x[1] + F0*np.sin(omega*t)]
+        return dxdt_vector
+
+    def _observedstate(t, i):
+        state_history = solve_ivp(_dxdt, y0=x0_nominal, t_span=[t_start, t], rtol=reltol, atol=abstol).y
+        final_state = state_history[i, -1]
+        return final_state
+
+    k = 4.518
+    c = 0.376
+    F0 = 8.865
+    omega = 1.44
+    x0 = 2
+    x0dot = 3
+    x0_nominal = [x0, x0dot]  # State vector here
+    posvelacc0_measured = [x0, x0dot, _dxdt(0, [x0, x0dot])[1]]
+
+    reltol = 1e-3
+    abstol = 1e-3
+    delta_t = 0.1
+    t_start = 0.0
+    t_end = 25
+
+    t_true = np.arange(t_start, t_end, delta_t)
+    x_true = solve_ivp(_dxdt, y0=x0_nominal, t_span=[t_true[0], t_true[-1]], t_eval=t_true, rtol=reltol, atol=abstol).y
+    acc_true = _dxdt(t_true, x_true)[1]
+    posvelacc_true = np.vstack([x_true, acc_true])
+
+    time_rec_obs = [time for time in [0.1, 0.3, 0.8, 1, 1.7, 3, 4, 4.3, 5, 6, 7, 8, 8.4, 9.5, 10.8, 11, 11.5, 13, 15, 18, 19, 19.3, 19.8, 20, 21.3, 22, 24]]
+    half_dt_obs = 0.01
+    time_obs = []
+    for i in range(len(time_rec_obs)):
+        time_obs.append(time_rec_obs[i] - half_dt_obs)
+        time_obs.append(time_rec_obs[i] + half_dt_obs)
+
+    position_obs = [observedstate(t, 0) for t in time_obs]
+    velocity_obs = [observedstate(t, 1) for t in time_obs]
+
+    # For the state, now interpolate:
+    position_rec_obs = []
+    for i in range(len(time_rec_obs)):
+        position_rec_obs.append((position_obs[2*i]+position_obs[2*i+1])/2.0)
+
+    velocity_rec_obs = []
+    for i in range(len(time_rec_obs)):
+        velocity_rec_obs.append((velocity_obs[2 * i] + velocity_obs[2 * i + 1]) / 2.0)
+
+    # For the acceleration, for now finite difference:
+    acc_rec_obs = []
+    for i in range(len(time_rec_obs)):
+        acc_rec_obs.append((velocity_obs[2*i+1]-velocity_obs[2*i])/(2.0*half_dt_obs))
+
+    x_train = [position_rec_obs, velocity_rec_obs, time_rec_obs]
+    x_train = np.asarray(x_train).transpose()
+
+    #? why do we set time record obesrvations to 1?
+    # Here the state is not only position and velocity x = [p, v], but also time, x = [p, v, t], so that its derivative with respect to time is \dot{x} = [v, \dot{v}, 1]
+    x_dot_train = [velocity_rec_obs, acc_rec_obs, np.ones(len(time_rec_obs)).tolist()]
+    x_dot_train = np.asarray(x_dot_train).transpose()
+    return x_dot_train
 
 
 ## VII. Main
