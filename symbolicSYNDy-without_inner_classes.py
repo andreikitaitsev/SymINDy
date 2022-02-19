@@ -40,9 +40,9 @@ class symbregrSINDy(object):
 	def configure_DEAP(ntrees=5, nc=1, dimensions=1):
 		'''
 		Inputs:
-			ntrees -int, number of trees defining an individual. Defualt=5.
-			nc -int, number of symbolic constants associated to the individual. Defualt=1.
-			dimensions - int, Defualt = 1.
+			ntrees -int, number of trees defining an individual. Default=5.
+			nc -int, number of symbolic constants associated to the individual. Default=1.
+			dimensions - int, Default = 1.
 		''' 
 		def _random_mating_operator(ind1, ind2):
 		    roll = random.random()

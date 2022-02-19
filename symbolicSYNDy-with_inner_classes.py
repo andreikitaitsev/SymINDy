@@ -1,4 +1,4 @@
-'''A sketch of general symbolicSYNDy class WITH inner classes'''
+'''A sketch of general symbolic SINDy class WITH inner classes'''
 
 
 # Functions
@@ -186,9 +186,11 @@ class symbregrSINDy(object):
 		'''
 		self.evolver = evolver
 		self.evaluator = evaluator
+
 	def fit(self):
 		self.population, self.logbook = self.evlolver() 
 		self.fitness = self.vvaluator(self.population, self.logbook)
+
 	def main():
 	    x_xdot_xddot = [position_rec_obs, velocity_rec_obs, acc_rec_obs]
 
