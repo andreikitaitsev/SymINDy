@@ -17,6 +17,11 @@ import matplotlib as mpl
 
 import os
 
+# the library class will be here
+class library():
+    def __init__(self, polynomial=None, trigonometric=None,\
+        fourier=None, nc=1, dimensions=1):
+
 
 class symbregrSINDy(object):
     def __init__(
@@ -51,6 +56,7 @@ class symbregrSINDy(object):
         self.score_metrics = score_metrics
         self.score_metrics_kwargs = score_metrics_kwargs
 
+    @staticmethod   
     def configure_DEAP(ntrees=5, nc=1, dimensions=1):
         """
         Inputs:
@@ -410,7 +416,7 @@ class symbregrSINDy(object):
         return fitness
 
     # ? predict test data (not x_dot, but x as well)?
-    def predict(self, x, u=None, multiple_trajectories=False):
+    def predict(self, x, u=None, multiple_trajectories=False, x_dot_pred_kwargs, x_pred_kwargs):
         """
 		Predict Predict the time derivatives using the SINDy model.
 		See pySINDy model.predict for more documentation.
@@ -426,13 +432,16 @@ class symbregrSINDy(object):
 			multiple_trajectories: boolean, optional (default False)
 				If True, x contains multiple trajectories and must be a list of
 				data from each trajectory. If False, x is a single trajectory.
+            x_pred_kwargs - dictionary of kwargs for pysindy.simulate function
+            x_dot_pred_kwargs - dictonary fof kwargs for pysindy.predict function
 		Outputs:
-			x_dot: array-like or list of array-like, shape (n_samples, n_input_features)
-				Predicted time derivatives
+            x_pred – Simulation results using pysindy simulate
+			x_dot_pred: array-like or list of array-like, shape (n_samples, n_input_features)
+			 	Predicted time derivatives
 		"""
-        x_dot_pred = self.model.predict(x, u, multiple_trajectories)
-        return x_dot_pred
+        x_pred = model.silulate(x0, t, u=None, **x_pred_kwargs)
+        x_dot_pred = self.model.predict(x, u, multiple_trajectories, **x_dot_pred_kwargs)
+        return x_pred, x_dot_pred 
 
     def plot():
-        # plot the graphs
         pass
