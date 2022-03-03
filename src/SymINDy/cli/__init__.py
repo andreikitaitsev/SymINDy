@@ -1,7 +1,9 @@
 import click
-from SymINDy.prop import prop
-from SymINDy.main import main
 import numpy as np
+
+from SymINDy.main import main
+from SymINDy.prop import prop
+
 
 @click.group(
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -51,7 +53,7 @@ def propagate(system, time):
     help="Dynamical System.",
 )
 def train(system):
-    filename = system + '.txt'
+    filename = system + ".txt"
     obs = np.loadtxt(filename)
     # print(obs)
     main(obs)

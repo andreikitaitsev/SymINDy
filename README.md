@@ -4,23 +4,28 @@
 
 In order to install dependencies, run the following:
 
-```bash
+```commandline
 pip install pip-tools
 ```
 
-and then 
+and then
 
-```bash
+```commandline
 pip install -r requirements/dev.txt
 ```
 
 ## Commands
+Before pushing, remember to run
+```commandline
+ pre-commit run --all-files
+```
 
-```bash
+```commandline
 SymINDy propagate -s myspring -t 10
 ```
 
 ## High-level goals
+
 - Passing the Build CI
 - Passing the documentation (sphinx recommended, but open to alternatives)
 - Have command-line interface (click recommended, but open to alternatives)

@@ -1,15 +1,13 @@
-import random
 import operator
-import numpy as np
+import random
 
-from scoop import futures
-from deap import base, creator, gp, tools
-
-import pysindy as ps
-
-from sklearn.metrics import *
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pysindy as ps
+from deap import base, creator, gp, tools
+from scoop import futures
+from sklearn.metrics import *
 
 
 class SymINDy_class(object):
@@ -24,9 +22,9 @@ class SymINDy_class(object):
         seed=0,
         score_metrics=None,
         score_metrics_kwargs=None,
-        nc = 1,
-        sindy_kwargs = None,
-        verbose = True
+        nc=1,
+        sindy_kwargs=None,
+        verbose=True,
     ):
         """
         Inputs:
@@ -192,7 +190,8 @@ class SymINDy_class(object):
         toolbox.register(
             "evaluate", eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
         )
-        import ipdb;
+        import ipdb
+
         return toolbox
 
     # ? consider making it a staticmethod
@@ -479,4 +478,4 @@ def main(obs):
     test.fit(obs)
     print(test)
 
-    print('Done.')
+    print("Done.")
