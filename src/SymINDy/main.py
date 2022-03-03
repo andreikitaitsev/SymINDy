@@ -1,15 +1,9 @@
+import random
 import operator
 import numpy as np
-import random
-import pysindy as ps
 
 from scoop import futures
 from deap import base, creator, gp, tools
-
-
-from scipy.integrate import solve_ivp
-from scipy.integrate import simps
-from scipy import optimize
 
 import pysindy as ps
 
@@ -17,17 +11,8 @@ from sklearn.metrics import *
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-import os
 
-# the library class will be here
-class library:
-    def __init__(
-        self, polynomial=None, trigonometric=None, fourier=None, nc=1, dimensions=1
-    ):
-        pass
-
-
-class symbregrSINDy(object):
+class SymINDy_class(object):
     def __init__(
         self,
         ngen=5,
@@ -39,7 +24,9 @@ class symbregrSINDy(object):
         seed=0,
         score_metrics=None,
         score_metrics_kwargs=None,
-        sindy_kwargs=None,
+        nc = 1,
+        sindy_kwargs = None,
+        verbose = True
     ):
         """
         Inputs:
@@ -59,6 +46,9 @@ class symbregrSINDy(object):
         # add verbal encoding of different scoring functions
         self.score_metrics = score_metrics
         self.score_metrics_kwargs = score_metrics_kwargs
+        self.nc = nc
+        self.sindy_kwargs = sindy_kwargs
+        self.verbose = verbose
 
     @staticmethod
     def configure_DEAP(ntrees=5, nc=1, dimensions=1):
@@ -160,10 +150,10 @@ class symbregrSINDy(object):
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
         """
-
         # Transform the tree expression in a callable function
         sr_functions = []
         for i in range(self.ntrees):
+            # import ipdb; ipdb.set_trace()
             sr_functions.append(self.toolbox.compile(expr=individual[i]))
         library = ps.CustomLibrary(library_functions=sr_functions)
 
@@ -186,6 +176,8 @@ class symbregrSINDy(object):
             metric=self.score_metrics,
             **self.score_metrics_kwargs
         )
+        # Add the functionality of using the difference of the numerical integrals using
+        # from scipy.integrate import simps
 
         # store trained model as an attribute #? Maybe change in the future for efficacy
         self.model = model
@@ -200,6 +192,7 @@ class symbregrSINDy(object):
         toolbox.register(
             "evaluate", eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
         )
+        import ipdb;
         return toolbox
 
     # ? consider making it a staticmethod
@@ -344,6 +337,7 @@ class symbregrSINDy(object):
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
         )
+
         # Add arguments from init
         toolbox = self.add_evalfunc_to_toolbex(
             toolbox,
@@ -439,7 +433,7 @@ class symbregrSINDy(object):
         """
 		Predict Predict the time derivatives using the SINDy model.
 		See pySINDy model.predict for more documentation.
-		https://pysindy.readthedocs.io/en/latest/api/pysindy.html#pysindy.pysindy.SINDy.predict		
+		https://pysindy.readthedocs.io/en/latest/api/pysindy.html#pysindy.pysindy.SINDy.predict
 		Inpts:
 			x: array-like or list of array-like, shape (n_samples, n_input_features)
 				Samples
@@ -473,9 +467,16 @@ class symbregrSINDy(object):
     def plot():
         pass
 
+    # if "__name__" == __main__:
+    #     lib_concat = ConcatLibrary(
+    #         pysindy.feature_library.polynomial_library,
+    #         pysindy.feature_library.FourierLibrary,
+    #     )
 
-if "__name__" == __main__:
-    lib_concat = ConcatLibrary(
-        pysindy.feature_library.polynomial_library,
-        pysindy.feature_library.FourierLibrary,
-    )
+
+def main(obs):
+    test = SymINDy_class()
+    test.fit(obs)
+    print(test)
+
+    print('Done.')

@@ -6,3 +6,4 @@ pysindy
 matplotlib
 networkx
 click
+ipdb

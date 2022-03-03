@@ -1,6 +1,7 @@
 import click
 from SymINDy.prop import prop
-
+from SymINDy.main import main
+import numpy as np
 
 @click.group(
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -41,3 +42,23 @@ def propagate(system, time):
     """propagate a given system and save a series of snapshots in a txt file"""
     prop(system, time)
 
+
+@cli.command(name="train")
+@click.option(
+    "-s",
+    "--system",
+    required=True,
+    help="Dynamical System.",
+)
+def train(system):
+    filename = system + '.txt'
+    obs = np.loadtxt(filename)
+    # print(obs)
+    main(obs)
+
+    # # the library class will be here
+    # class library:
+    #     def __init__(
+    #             self, polynomial=None, trigonometric=None, fourier=None, nc=1, dimensions=1
+    #     ):
+    #         pass
