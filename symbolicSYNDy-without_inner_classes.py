@@ -20,9 +20,11 @@ import matplotlib as mpl
 import os
 
 # the library class will be here
-class library():
-    def __init__(self, polynomial=None, trigonometric=None,\
-        fourier=None, nc=1, dimensions=1):
+class library:
+    def __init__(
+        self, polynomial=None, trigonometric=None, fourier=None, nc=1, dimensions=1
+    ):
+        pass
 
 
 class symbregrSINDy(object):
@@ -58,7 +60,7 @@ class symbregrSINDy(object):
         self.score_metrics = score_metrics
         self.score_metrics_kwargs = score_metrics_kwargs
 
-    @staticmethod   
+    @staticmethod
     def configure_DEAP(ntrees=5, nc=1, dimensions=1):
         """
         Inputs:
@@ -161,7 +163,7 @@ class symbregrSINDy(object):
 
         # Transform the tree expression in a callable function
         sr_functions = []
-        for i in range(ntrees):
+        for i in range(self.ntrees):
             sr_functions.append(toolbox.compile(expr=individual[i]))
         library = ps.CustomLibrary(library_functions=sr_functions)
 
@@ -344,7 +346,12 @@ class symbregrSINDy(object):
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
         )  # Add arguments from init
         toolbox = self.add_evalfunc_to_toolbex(
-            toolbox, self.evalSymbReg, x_train, x_dot_train, time_rec_obs, self.sindy_kwargs
+            toolbox,
+            self.evalSymbReg,
+            x_train,
+            x_dot_train,
+            time_rec_obs,
+            self.sindy_kwargs,
         )
         mstats = self.init_stats()
         pop = toolbox.population(n=300)
@@ -409,19 +416,25 @@ class symbregrSINDy(object):
         if metric_kwargs is None:
             metric_kwargs = {}
         # Use R2
-        fitness = - self.model.score(
+        fitness = -self.model.score(
             x,
-            t = np.array(self.time_rec_obs),
-            x_dot = x_dot,
-            u = u,
-            multiple_trajectories = multiple_trajectories,
-            metric  =metric,
+            t=np.array(self.time_rec_obs),
+            x_dot=x_dot,
+            u=u,
+            multiple_trajectories=multiple_trajectories,
+            metric=metric,
             **metric_kwargs
         )
         return fitness
 
-    def predict(self, x, u=None, multiple_trajectories=False, x_dot_pred_kwargs = None, 
-        x_pred_kwargs = None):
+    def predict(
+        self,
+        x,
+        u=None,
+        multiple_trajectories=False,
+        x_dot_pred_kwargs=None,
+        x_pred_kwargs=None,
+    ):
         """
 		Predict Predict the time derivatives using the SINDy model.
 		See pySINDy model.predict for more documentation.
@@ -449,10 +462,12 @@ class symbregrSINDy(object):
         else:
             x_pred = self.model.silulate(x0, t, u=None)
         if x_dot_pred_kwargs is not None:
-            x_dot_pred = self.model.predict(x, u, multiple_trajectories, **x_dot_pred_kwargs)
+            x_dot_pred = self.model.predict(
+                x, u, multiple_trajectories, **x_dot_pred_kwargs
+            )
         else:
-            x_pred = self.model.silulate(x0, t, u=None) 
-        return x_pred, x_dot_pred 
+            x_pred = self.model.silulate(x0, t, u=None)
+        return x_pred, x_dot_pred
 
     def plot():
         pass
