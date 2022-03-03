@@ -1,17 +1,19 @@
 import operator
 import numpy as np
+import random
+import pysindy as ps
 
 from scoop import futures
 from deap import base, creator, gp, tools
-import random
+
 
 from scipy.integrate import solve_ivp
 from scipy.integrate import simps
 from scipy import optimize
 
-import pysindy as ps
 from python_utils import *
 
+from sklearn.metrics import *
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
@@ -335,16 +337,16 @@ class symbregrSINDy(object):
         mstats.register("max", np.max)
         return mstats
 
-    def fit(self, x_train, x_dot_train=None):
+    def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
         """Essentially, the key function, which calls everything else"""
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
         )  # Add arguments from init
-        toolbox = add_evalfunc_to_toolbex(
-            toolbox, self.evalSymbReg, x_train, x_dot_train, time_rec_obs, sindy_kwargs
+        toolbox = self.add_evalfunc_to_toolbex(
+            toolbox, self.evalSymbReg, x_train, x_dot_train, time_rec_obs, self.sindy_kwargs
         )
-        mstats = init_stats()
+        mstats = self.init_stats()
         pop = toolbox.population(n=300)
         hof = tools.HallOfFame(1)
         self.toolbox = toolbox
@@ -357,7 +359,7 @@ class symbregrSINDy(object):
             pop,
             self.toolbox,
             cxpb=self.cxpb,
-            mutpb=slef.mutpb,
+            mutpb=self.mutpb,
             ngen=self.ngen,
             stats=mstats,
             halloffame=hof,
@@ -366,6 +368,9 @@ class symbregrSINDy(object):
         self.pop = pop
         self.log = log
         self.hof = hof
+
+        # Store time_rec_obs as an attribute
+        self.time_rec_obs = time_rec_obs
 
     def score(
         self,
@@ -404,19 +409,19 @@ class symbregrSINDy(object):
         if metric_kwargs is None:
             metric_kwargs = {}
         # Use R2
-        fitness = -model.score(
-            x_train,
-            t=np.array(time_rec_obs),
-            x_dot=x_dot_train,
-            u=u,
-            multiple_trajectories=multiple_trajectories,
-            metric=metric,
-            **metric_kws
+        fitness = - self.model.score(
+            x,
+            t = np.array(self.time_rec_obs),
+            x_dot = x_dot,
+            u = u,
+            multiple_trajectories = multiple_trajectories,
+            metric  =metric,
+            **metric_kwargs
         )
         return fitness
 
-    # ? predict test data (not x_dot, but x as well)?
-    def predict(self, x, u=None, multiple_trajectories=False, x_dot_pred_kwargs, x_pred_kwargs):
+    def predict(self, x, u=None, multiple_trajectories=False, x_dot_pred_kwargs = None, 
+        x_pred_kwargs = None):
         """
 		Predict Predict the time derivatives using the SINDy model.
 		See pySINDy model.predict for more documentation.
@@ -439,8 +444,14 @@ class symbregrSINDy(object):
 			x_dot_pred: array-like or list of array-like, shape (n_samples, n_input_features)
 			 	Predicted time derivatives
 		"""
-        x_pred = model.silulate(x0, t, u=None, **x_pred_kwargs)
-        x_dot_pred = self.model.predict(x, u, multiple_trajectories, **x_dot_pred_kwargs)
+        if x_pred_kwargs is not None:
+            x_pred = self.model.silulate(x0, t, u=None, **x_pred_kwargs)
+        else:
+            x_pred = self.model.silulate(x0, t, u=None)
+        if x_dot_pred_kwargs is not None:
+            x_dot_pred = self.model.predict(x, u, multiple_trajectories, **x_dot_pred_kwargs)
+        else:
+            x_pred = self.model.silulate(x0, t, u=None) 
         return x_pred, x_dot_pred 
 
     def plot():
