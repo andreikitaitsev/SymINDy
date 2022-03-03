@@ -5,10 +5,10 @@ import click
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 def cli():
-    """Management CLI for dsr"""
+    """Management CLI for SymINDy"""
 
 
 @cli.command(name="helloworld")
 def helloworld():
     """Hello world of documentation."""
-    print("Hello world, you are using the command line interface of dsr!")
+    print("Hello world, you are using the command line interface of SymINDy!")

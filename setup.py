@@ -3,7 +3,7 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
-INIT_FILE = Path("src/dsr/__init__.py")
+INIT_FILE = Path("src/SymINDy/__init__.py")
 
 init_data = INIT_FILE.read_text()
 
@@ -13,7 +13,7 @@ AUTHOR = metadata["author"]
 VERSION = metadata["version"]
 
 setup(
-    name="dsr",
+    name="SymINDy",
     version=VERSION,
     author=AUTHOR,
     packages=find_packages("src"),

@@ -10,7 +10,6 @@ from scipy.integrate import simps
 from scipy import optimize
 
 import pysindy as ps
-from python_utils import *
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -19,8 +18,8 @@ import os
 
 # the library class will be here
 class library():
-    def __init__(self, polynomial=None, trigonometric=None,\
-        fourier=None, nc=1, dimensions=1):
+    def __init__(self, polynomial=None, trigonometric=None, fourier=None, nc=1, dimensions=1):
+        print('Placeholder.')
 
 
 class symbregrSINDy(object):
@@ -177,7 +176,6 @@ class symbregrSINDy(object):
             x_train,
             t=np.array(time_rec_obs),
             x_dot=x_dot_train,
-            t=time_rec_obs,
             u=None,
             multiple_trajectories=False,
             metric=self.score_metrics,
@@ -357,7 +355,7 @@ class symbregrSINDy(object):
             pop,
             self.toolbox,
             cxpb=self.cxpb,
-            mutpb=slef.mutpb,
+            mutpb=self.mutpb,
             ngen=self.ngen,
             stats=mstats,
             halloffame=hof,
