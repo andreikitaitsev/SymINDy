@@ -1,9 +1,11 @@
 import operator
 import numpy as np
+import random
+import pysindy as ps
 
 from scoop import futures
 from deap import base, creator, gp, tools
-import random
+
 
 from scipy.integrate import solve_ivp
 from scipy.integrate import simps
@@ -11,15 +13,18 @@ from scipy import optimize
 
 import pysindy as ps
 
+from sklearn.metrics import *
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 import os
 
 # the library class will be here
-class library():
-    def __init__(self, polynomial=None, trigonometric=None, fourier=None, nc=1, dimensions=1):
-        print('Placeholder.')
+class library:
+    def __init__(
+        self, polynomial=None, trigonometric=None, fourier=None, nc=1, dimensions=1
+    ):
+        pass
 
 
 class symbregrSINDy(object):
@@ -55,7 +60,7 @@ class symbregrSINDy(object):
         self.score_metrics = score_metrics
         self.score_metrics_kwargs = score_metrics_kwargs
 
-    @staticmethod   
+    @staticmethod
     def configure_DEAP(ntrees=5, nc=1, dimensions=1):
         """
         Inputs:
@@ -158,8 +163,8 @@ class symbregrSINDy(object):
 
         # Transform the tree expression in a callable function
         sr_functions = []
-        for i in range(ntrees):
-            sr_functions.append(toolbox.compile(expr=individual[i]))
+        for i in range(self.ntrees):
+            sr_functions.append(self.toolbox.compile(expr=individual[i]))
         library = ps.CustomLibrary(library_functions=sr_functions)
 
         if sindy_kwargs is not None:
@@ -256,7 +261,7 @@ class symbregrSINDy(object):
                 # for h_component in range(ntrees):
                 if random.random() < cxpb:
                     h_component = random.randint(
-                        0, ntrees - 1
+                        0, self.ntrees - 1
                     )  # where do we define ntrees?
                     (
                         offspring[i - 1][h_component],
@@ -267,7 +272,7 @@ class symbregrSINDy(object):
                     del offspring[i - 1].fitness.values, offspring[i].fitness.values
 
             for i in range(len(offspring)):
-                for h_component in range(ntrees):
+                for h_component in range(self.ntrees):
                     if random.random() < mutpb:
                         # h_component = random.randint(0, ntrees-1)
                         (offspring[i][h_component],) = toolbox_local.mutate(
@@ -318,7 +323,7 @@ class symbregrSINDy(object):
             logbook.record(gen=gen, nevals=len(invalid_ind), **record)
             if verbose:
                 print(logbook.stream)
-                for i in range(ntrees):
+                for i in range(self.ntrees):
                     print(halloffame[0][i])
         return population, logbook
 
@@ -333,18 +338,25 @@ class symbregrSINDy(object):
         mstats.register("max", np.max)
         return mstats
 
-    def fit(self, x_train, x_dot_train=None):
+    def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
         """Essentially, the key function, which calls everything else"""
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
-        )  # Add arguments from init
-        toolbox = add_evalfunc_to_toolbex(
-            toolbox, self.evalSymbReg, x_train, x_dot_train, time_rec_obs, sindy_kwargs
         )
-        mstats = init_stats()
+        # Add arguments from init
+        toolbox = self.add_evalfunc_to_toolbex(
+            toolbox,
+            self.evalSymbReg,
+            x_train,
+            x_dot_train,
+            time_rec_obs,
+            self.sindy_kwargs,
+        )
+        mstats = self.init_stats()
         pop = toolbox.population(n=300)
         hof = tools.HallOfFame(1)
+
         self.toolbox = toolbox
         self.creator = creator
         self.pset = pset
@@ -364,6 +376,9 @@ class symbregrSINDy(object):
         self.pop = pop
         self.log = log
         self.hof = hof
+
+        # Store time_rec_obs as an attribute
+        self.time_rec_obs = time_rec_obs
 
     def score(
         self,
@@ -402,19 +417,25 @@ class symbregrSINDy(object):
         if metric_kwargs is None:
             metric_kwargs = {}
         # Use R2
-        fitness = -model.score(
-            x_train,
-            t=np.array(time_rec_obs),
-            x_dot=x_dot_train,
+        fitness = -self.model.score(
+            x,
+            t=np.array(self.time_rec_obs),
+            x_dot=x_dot,
             u=u,
             multiple_trajectories=multiple_trajectories,
             metric=metric,
-            **metric_kws
+            **metric_kwargs
         )
         return fitness
 
-    # ? predict test data (not x_dot, but x as well)?
-    def predict(self, x, u=None, multiple_trajectories=False, x_dot_pred_kwargs, x_pred_kwargs):
+    def predict(
+        self,
+        x,
+        u=None,
+        multiple_trajectories=False,
+        x_dot_pred_kwargs=None,
+        x_pred_kwargs=None,
+    ):
         """
 		Predict Predict the time derivatives using the SINDy model.
 		See pySINDy model.predict for more documentation.
@@ -437,9 +458,24 @@ class symbregrSINDy(object):
 			x_dot_pred: array-like or list of array-like, shape (n_samples, n_input_features)
 			 	Predicted time derivatives
 		"""
-        x_pred = model.silulate(x0, t, u=None, **x_pred_kwargs)
-        x_dot_pred = self.model.predict(x, u, multiple_trajectories, **x_dot_pred_kwargs)
-        return x_pred, x_dot_pred 
+        if x_pred_kwargs is not None:
+            x_pred = self.model.silulate(x0, t, u=None, **x_pred_kwargs)
+        else:
+            x_pred = self.model.silulate(x0, t, u=None)
+        if x_dot_pred_kwargs is not None:
+            x_dot_pred = self.model.predict(
+                x, u, multiple_trajectories, **x_dot_pred_kwargs
+            )
+        else:
+            x_pred = self.model.silulate(x0, t, u=None)
+        return x_pred, x_dot_pred
 
     def plot():
         pass
+
+
+if "__name__" == __main__:
+    lib_concat = ConcatLibrary(
+        pysindy.feature_library.polynomial_library,
+        pysindy.feature_library.FourierLibrary,
+    )
