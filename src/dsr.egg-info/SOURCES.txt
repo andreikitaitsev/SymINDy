@@ -3,6 +3,7 @@ README.md
 setup.py
 src/dsr/__init__.py
 src/dsr/__main__.py
+src/dsr/symbolicSYNDy-without_inner_classes.py
 src/dsr/util.py
 src/dsr.egg-info/PKG-INFO
 src/dsr.egg-info/SOURCES.txt
