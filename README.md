@@ -14,6 +14,12 @@ and then
 pip install -r requirements/dev.txt
 ```
 
+## Commands
+
+```bash
+SymINDy propagate -s myspring -t 10
+```
+
 ## High-level goals
 - Passing the Build CI
 - Passing the documentation (sphinx recommended, but open to alternatives)

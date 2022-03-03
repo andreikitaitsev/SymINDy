@@ -20,5 +20,5 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">= 3.9",
-    entry_points={"console_scripts": ["dsr=dsr.__main__:cli"]},
+    entry_points={"console_scripts": ["SymINDy=SymINDy.__main__:cli"]},
 )
