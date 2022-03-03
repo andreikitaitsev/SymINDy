@@ -164,7 +164,7 @@ class symbregrSINDy(object):
         # Transform the tree expression in a callable function
         sr_functions = []
         for i in range(self.ntrees):
-            sr_functions.append(toolbox.compile(expr=individual[i]))
+            sr_functions.append(self.toolbox.compile(expr=individual[i]))
         library = ps.CustomLibrary(library_functions=sr_functions)
 
         if sindy_kwargs is not None:
@@ -262,7 +262,7 @@ class symbregrSINDy(object):
                 # for h_component in range(ntrees):
                 if random.random() < cxpb:
                     h_component = random.randint(
-                        0, ntrees - 1
+                        0, self.ntrees - 1
                     )  # where do we define ntrees?
                     (
                         offspring[i - 1][h_component],
@@ -273,7 +273,7 @@ class symbregrSINDy(object):
                     del offspring[i - 1].fitness.values, offspring[i].fitness.values
 
             for i in range(len(offspring)):
-                for h_component in range(ntrees):
+                for h_component in range(self.ntrees):
                     if random.random() < mutpb:
                         # h_component = random.randint(0, ntrees-1)
                         (offspring[i][h_component],) = toolbox_local.mutate(
@@ -324,7 +324,7 @@ class symbregrSINDy(object):
             logbook.record(gen=gen, nevals=len(invalid_ind), **record)
             if verbose:
                 print(logbook.stream)
-                for i in range(ntrees):
+                for i in range(self.ntrees):
                     print(halloffame[0][i])
         return population, logbook
 
@@ -344,7 +344,8 @@ class symbregrSINDy(object):
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
-        )  # Add arguments from init
+        )
+        # Add arguments from init
         toolbox = self.add_evalfunc_to_toolbex(
             toolbox,
             self.evalSymbReg,
@@ -356,6 +357,7 @@ class symbregrSINDy(object):
         mstats = self.init_stats()
         pop = toolbox.population(n=300)
         hof = tools.HallOfFame(1)
+
         self.toolbox = toolbox
         self.creator = creator
         self.pset = pset
@@ -471,3 +473,12 @@ class symbregrSINDy(object):
 
     def plot():
         pass
+
+
+if "__name__" == __main__:
+    lib_concat = ConcatLibrary(
+        pysindy.feature_library.polynomial_library,
+        pysindy.feature_library.FourierLibrary,
+    )
+
+    symsyn
