@@ -11,7 +11,7 @@ from scipy.integrate import solve_ivp
 from scipy.integrate import simps
 from scipy import optimize
 
-from python_utils import *
+import pysindy as ps
 
 from sklearn.metrics import *
 import matplotlib.pyplot as plt
@@ -181,7 +181,6 @@ class symbregrSINDy(object):
             x_train,
             t=np.array(time_rec_obs),
             x_dot=x_dot_train,
-            t=time_rec_obs,
             u=None,
             multiple_trajectories=False,
             metric=self.score_metrics,
@@ -480,5 +479,3 @@ if "__name__" == __main__:
         pysindy.feature_library.polynomial_library,
         pysindy.feature_library.FourierLibrary,
     )
-
-    symsyn

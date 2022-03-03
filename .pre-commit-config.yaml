@@ -1,0 +1,34 @@
+repos:
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.4.1
+    hooks:
+      - id: prettier
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.9.3 # should be the same as in dev.in
+    hooks:
+      - id: isort
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 4.0.1 # should be the same as in dev.in
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          # should be the same as in dev.in
+          - flake8-bugbear==21.9.2
+          - flake8-docstrings==1.6.0
+          - flake8-typing-imports==1.11.0
+  - repo: https://github.com/psf/black
+    rev: 21.9b0 # should be the same as in dev.in
+    hooks:
+      - id: black
