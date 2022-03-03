@@ -24,3 +24,4 @@ def prop(system, time):
         plt.savefig("myspring.png")
 
         np.savetxt("myspring.txt", obs)
+        np.savetxt('myspringtime.txt', t_eval)

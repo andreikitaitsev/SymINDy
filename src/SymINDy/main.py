@@ -130,7 +130,7 @@ class SymINDy_class(object):
         return toolbox, creator, pset, history
 
     def evalSymbReg(
-        self, individual, x_train, x_dot_train, time_rec_obs=None, sindy_kwargs=None
+        self, individual, x_train, x_dot_train, time_rec_obs=None, sindy_kwargs=None # 04-03-22: x_train, x_dot_train and time_rec_obs are all empty here.
     ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
@@ -148,10 +148,14 @@ class SymINDy_class(object):
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
         """
+        print(self)
+        print(x_train)
+        print(x_dot_train)
+        print(time_rec_obs)
+        # import ipdb; ipdb.set_trace()
         # Transform the tree expression in a callable function
         sr_functions = []
         for i in range(self.ntrees):
-            # import ipdb; ipdb.set_trace()
             sr_functions.append(self.toolbox.compile(expr=individual[i]))
         library = ps.CustomLibrary(library_functions=sr_functions)
 
@@ -184,13 +188,15 @@ class SymINDy_class(object):
         ]
 
     @staticmethod
-    def add_evalfunc_to_toolbex(
+    def add_evalfunc_to_toolbox(
         toolbox, eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
     ):
+        print(x_train)
+        print(x_dot_train)
+        print(time_rec_obs)
+
         toolbox.register(
-            "evaluate", eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
-        )
-        import ipdb
+            "evaluate", eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs)
 
         return toolbox
 
@@ -338,7 +344,7 @@ class SymINDy_class(object):
         )
 
         # Add arguments from init
-        toolbox = self.add_evalfunc_to_toolbex(
+        toolbox = self.add_evalfunc_to_toolbox(
             toolbox,
             self.evalSymbReg,
             x_train,
@@ -473,9 +479,9 @@ class SymINDy_class(object):
     #     )
 
 
-def main(obs):
+def main(obs, obs_time):
     test = SymINDy_class()
-    test.fit(obs)
+    test.fit(obs, time_rec_obs=obs_time)
     print(test)
 
     print("Done.")
