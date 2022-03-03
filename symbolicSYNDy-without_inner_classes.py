@@ -24,6 +24,7 @@ class library():
 
 
 class symbregrSINDy(object):
+<<<<<<< HEAD
     def __init__(
         self,
         ngen=5,

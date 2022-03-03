@@ -1,0 +1,3 @@
+[console_scripts]
+dsr = dsr.__main__:cli
+
