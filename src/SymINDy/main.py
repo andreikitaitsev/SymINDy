@@ -8,6 +8,7 @@ import pysindy as ps
 from deap import base, creator, gp, tools
 from scoop import futures
 from sklearn.metrics import *
+from SymINDy.ourbase import Toolbox
 
 
 class SymINDy_class(object):
@@ -94,7 +95,7 @@ class SymINDy_class(object):
             "Subindividual", gp.PrimitiveTree
         )  # subindividual is a primitive tree which is populated from pset
         creator.create("Individual", list, fitness=creator.FitnessMin)
-        toolbox = base.Toolbox()
+        toolbox = Toolbox()
         toolbox.register(
             "expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2
         )  # ? type_=pset.ret is the default of gp.genHalfAndHalf
@@ -149,6 +150,7 @@ class SymINDy_class(object):
                         a tuple or a list).
         """
         print(self)
+        print(individual)
         print(x_train)
         print(x_dot_train)
         print(time_rec_obs)
@@ -191,11 +193,11 @@ class SymINDy_class(object):
     def add_evalfunc_to_toolbox(
         toolbox, eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
     ):
-        print(x_train)
-        print(x_dot_train)
-        print(time_rec_obs)
+        # print(x_train)
+        # print(x_dot_train)
+        # print(time_rec_obs)
 
-        toolbox.register(
+        toolbox.register_eval(
             "evaluate", eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs)
 
         return toolbox
