@@ -2,7 +2,6 @@ Metadata-Version: 2.1
 Name: SymINDy
 Version: 0.1
 Summary: UNKNOWN
-Home-page: UNKNOWN
 Author: Matteo Manzi, Andrei Kitaitsev
 License: UNKNOWN
 Platform: UNKNOWN
@@ -10,3 +9,4 @@ Requires-Python: >= 3.9
 License-File: LICENSE
 
 UNKNOWN
+

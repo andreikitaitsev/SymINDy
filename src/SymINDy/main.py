@@ -5,7 +5,10 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy as ps
-from deap import base, creator, gp, tools
+from deap import creator, gp, tools
+
+import mybase as base
+
 from scoop import futures
 from sklearn.metrics import *
 
@@ -183,15 +186,14 @@ class SymINDy_class(object):
             fitness,
         ]
 
+    # ? If works, add the new method to the base, not to add custom deap to the requirements
     @staticmethod
     def add_evalfunc_to_toolbex(
         toolbox, eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
     ):
-        toolbox.register(
+        toolbox.register_eval(
             "evaluate", eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
         )
-        import ipdb
-
         return toolbox
 
     # ? consider making it a staticmethod
