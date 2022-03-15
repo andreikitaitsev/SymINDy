@@ -28,7 +28,7 @@ except ImportError:
     from collections import Sequence
 
 from copy import deepcopy
-from functools import partial
+from functools import partial, partialmethod
 from operator import mul, truediv
 
 
@@ -92,27 +92,25 @@ class Toolbox(object):
 
         setattr(self, alias, pfunc)
 
-    def register_eval(
-        self, alias, eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
-    ):
-        """Register evaluation function avoidning using functools.partial.
-        The reason is that partial converts all the class methods to static methods,
-        which we do not want for evalSymbRegr method of SymINDy_class.
+    def register_eval(self, alias, eval_func, *args, **kwargs):
+        """Function specifically designed only for evalSymbReg.
+
+        Register evaluation function avoidning using functools.partialmethod.
 
         The registered function will be given the attributes :attr:`__name__`
         set to the alias and :attr:`__doc__` set to the original function's
         documentation. The :attr:`__dict__` attribute will also be updated
         with the original function's instance dictionary, if any.
         """
-        pfunc = eval_func(x_train, x_dot_train, time_rec_obs, sindy_kwargs)
+        pfunc = partialmethod(eval_func, *args, **kwargs)
         pfunc.__name__ = alias
         pfunc.__doc__ = eval_func.__doc__
 
-        if hasattr(function, "__dict__") and not isinstance(function, type):
+        if hasattr(eval_func, "__dict__") and not isinstance(eval_func, type):
             # Some functions don't have a dictionary, in these cases
             # simply don't copy it. Moreover, if the function is actually
             # a class, we do not want to copy the dictionary.
-            pfunc.__dict__.update(function.__dict__.copy())
+            pfunc.__dict__.update(eval_func.__dict__.copy())
 
         setattr(self, alias, pfunc)
 
