@@ -5,7 +5,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy as ps
-from deap import base, creator, gp, tools
+from deap import creator, gp, tools
+from sklearn.metrics import r2_score
+import mybase as base
 
 from scoop import futures
 from sklearn.metrics import *
@@ -130,20 +132,24 @@ class SymINDy_class(object):
         )
         return toolbox, creator, pset, history
 
+    @staticmethod
     def evalSymbReg(
-        self,
         individual,
+        ntrees,
         toolbox,
         x_train,
         x_dot_train,
         time_rec_obs=None,
         sindy_kwargs=None,
+        score_metrics=None,
+        score_metrics_kwargs=None,
     ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
         https://pysindy.readthedocs.io/en/latest/api/pysindy.html#module-pysindy.pysindy
         Inputs:
                 individual - list of individuals (individuals with invalid fitness)
+                ntrees
                 toolbox - deap base toolbox instance
                 x_train - np array, training data
                 x_dot_train - precomputed derivatives of the training data, optional. Defualt=None, no
@@ -156,68 +162,60 @@ class SymINDy_class(object):
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
         """
+        if sindy_kwargs is None:
+            sindy_kwargs = {}
+        if score_metrics is None:
+            score_metrics = r2_score
+        if score_metrics_kwargs is None:
+            score_metrics_kwargs = {}
+
         # Transform the tree expression in a callable function
         sr_functions = []
-        import ipdb
-
-        ipdb.set_trace()
-        for i in range(self.ntrees):
+        for i in range(ntrees):
             # ? Does it create an individual anew every time when called?
             sr_functions.append(toolbox.compile(expr=individual[i]))
         library = ps.CustomLibrary(library_functions=sr_functions)
 
-        if sindy_kwargs is not None:
-            model = ps.SINDy(feature_library=library, **sindy_kwargs)
-        elif sindy_kwargs is None:
-            model = ps.SINDy(feature_library=library, **sindy_kwargs)
+        model = ps.SINDy(feature_library=library, **sindy_kwargs)
+
+        #! check input e.g. x_train shall have at least 3 timepoints
+        def validate_input(x_train):
+            if x_train.shape[0] < 3:
+                raise ValueError("x_train shall have at least 3 timepounts!")
+
         if x_dot_train is not None:
-            model.fit(x_train, t=np.array(time_rec_obs), x_dot=x_dot_train)
+            model.fit(x_train, t=time_rec_obs, x_dot=x_dot_train)
         elif x_dot_train is None:
-            model.fit(x_train, t=np.array(time_rec_obs))
+            model.fit(x_train, t=time_rec_obs)
 
         #! Uses corr coef of thresholded least square
         fitness = -model.score(
             x_train,
-            t=np.array(time_rec_obs),
+            t=time_rec_obs,
             x_dot=x_dot_train,
             u=None,
             multiple_trajectories=False,
-            metric=self.score_metrics,
-            **self.score_metrics_kwargs
+            metric=score_metrics,
+            **score_metrics_kwargs
         )
         # Add the functionality of using the difference of the numerical integrals using
         # from scipy.integrate import simps
 
         # store trained model as an attribute #? Maybe change in the future for efficacy
-        self.model = model
+        # self.model = model
         return [
             fitness,
         ]
 
-    # ? If works, add the new method to the base, not to add custom deap to the requirements
+    # static method shall solve problems with functool.partial in toolbox.register
     @staticmethod
-    def add_evalfunc_to_toolbox(
-        toolbox, eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
-    ):
-        toolbox.register_eval(
-            "evaluate",
-            eval_func,
-            toolbox,
-            x_train,
-            x_dot_train,
-            time_rec_obs,
-            sindy_kwargs,
-        )
-        return toolbox
-
-    # ? consider making it a staticmethod
     def my_eaSimple(
-        self,
         population,
         toolbox_local,
         cxpb,
         mutpb,
         ngen,
+        ntrees,
         stats=None,
         halloffame=None,
         verbose=__debug__,
@@ -232,6 +230,7 @@ class SymINDy_class(object):
                 cxpb – The probability of mating two individuals.
                 mutpb – The probability of mutating an individual.
                 ngen – The number of generation.
+                ntrees
                 stats – A DEAP Statistics object that is updated inplace. Default=None.
                 halloffame – A DEAP HallOfFame object that will contain the best individuals. Default=None.
                 verbose – Whether or not to log the statistics. Default=__debug__.
@@ -269,7 +268,7 @@ class SymINDy_class(object):
                 # for h_component in range(ntrees):
                 if random.random() < cxpb:
                     h_component = random.randint(
-                        0, self.ntrees - 1
+                        0, ntrees - 1
                     )  # where do we define ntrees?
                     (
                         offspring[i - 1][h_component],
@@ -280,7 +279,7 @@ class SymINDy_class(object):
                     del offspring[i - 1].fitness.values, offspring[i].fitness.values
 
             for i in range(len(offspring)):
-                for h_component in range(self.ntrees):
+                for h_component in range(ntrees):
                     if random.random() < mutpb:
                         # h_component = random.randint(0, ntrees-1)
                         (offspring[i][h_component],) = toolbox_local.mutate(
@@ -294,9 +293,7 @@ class SymINDy_class(object):
 
         # Evaluate the fitness of the first population
         invalid_ind = [ind for ind in population if not ind.fitness.valid]
-        import ipdb
 
-        ipdb.set_trace()
         ###  partial method object is not callable - we shall dig deeper into this, here is an answer
         ### https://stackoverflow.com/questions/49662666/unable-to-call-function-defined-by-partialmethod
 
@@ -337,7 +334,7 @@ class SymINDy_class(object):
             logbook.record(gen=gen, nevals=len(invalid_ind), **record)
             if verbose:
                 print(logbook.stream)
-                for i in range(self.ntrees):
+                for i in range(ntrees):
                     print(halloffame[0][i])
         return population, logbook
 
@@ -360,14 +357,19 @@ class SymINDy_class(object):
         )
 
         # Add arguments from init
-        toolbox = self.add_evalfunc_to_toolbox(
-            toolbox,
+        toolbox.register(
+            "evaluate",
             self.evalSymbReg,
-            x_train,
-            x_dot_train,
-            time_rec_obs,
-            self.sindy_kwargs,
+            ntrees=self.ntrees,
+            toolbox=toolbox,
+            x_train=x_train,
+            x_dot_train=x_dot_train,
+            time_rec_obs=time_rec_obs,
+            sindy_kwargs=self.sindy_kwargs,
+            score_metrics=self.score_metrics,
+            score_metrics_kwargs=self.score_metrics_kwargs,
         )
+
         mstats = self.init_stats()
         pop = toolbox.population(n=300)
         hof = tools.HallOfFame(1)
@@ -384,16 +386,21 @@ class SymINDy_class(object):
             cxpb=self.cxpb,
             mutpb=self.mutpb,
             ngen=self.ngen,
+            ntrees=self.ntrees,
             stats=mstats,
             halloffame=hof,
             verbose=self.verbose,
         )
+
         self.pop = pop
         self.log = log
         self.hof = hof
 
         # Store time_rec_obs as an attribute
         self.time_rec_obs = time_rec_obs
+        import ipdb
+
+        ipdb.set_trace
 
     def score(
         self,
@@ -434,7 +441,7 @@ class SymINDy_class(object):
         # Use R2
         fitness = -self.model.score(
             x,
-            t=np.array(self.time_rec_obs),
+            t=self.time_rec_obs,
             x_dot=x_dot,
             u=u,
             multiple_trajectories=multiple_trajectories,
