@@ -92,7 +92,9 @@ class SymINDy_class(object):
         pset.addPrimitive(np.multiply, [float, float], float, name="mul")
         pset.addPrimitive(np.sin, [float], float, name="sin")
         pset.addPrimitive(np.cos, [float], float, name="cos")
-        pset.addPrimitive(np.square, [float], float, name="square")
+        pset.addPrimitive(np.add, [float, float], float, name="add")
+        pset.addPrimitive(np.exp, [float], float, name="mul")
+
         #        for dim in range(dimensions):
         #            pset.renameArguments(eval("ARG{}".format(dim) ) = "y{}".format(dim))
         #        for i in range(nc):
@@ -153,6 +155,7 @@ class SymINDy_class(object):
         sindy_kwargs=None,
         score_metrics=None,
         score_metrics_kwargs=None,
+        flag_solution=False,
     ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
@@ -196,15 +199,19 @@ class SymINDy_class(object):
         validate_input(x_train)
 
         if x_dot_train is not None:
-            model.fit(x_train, t=time_rec_obs, x_dot=x_dot_train)
+            model.fit(
+                x_train[: np.floor(0.8) * len(x_train)],
+                t=time_rec_obs,
+                x_dot=x_dot_train[: np.floor(0.8) * len(x_train)],
+            )
         elif x_dot_train is None:
-            model.fit(x_train, t=time_rec_obs)
+            model.fit(x_train[: np.floor(0.8) * len(x_train)], t=time_rec_obs)
 
         #! Uses corr coef of thresholded least square
         fitness = -model.score(
-            x_train,
+            x_train[np.floor(0.8) * len(x_train) :],
             t=time_rec_obs,
-            x_dot=x_dot_train,
+            x_dot=x_dot_train[np.floor(0.8) * len(x_train) :],
             u=None,
             multiple_trajectories=False,
             metric=score_metrics,
@@ -212,9 +219,12 @@ class SymINDy_class(object):
         )
         # Add the functionality of using the difference of the numerical integrals using
         # from scipy.integrate import simps
-        return [
-            fitness,
-        ]
+        if not flag_solution:
+            return [
+                fitness,
+            ]
+        else:
+            return model
 
     # static method shall solve problems with functool.partial in toolbox.register
     @staticmethod
@@ -341,7 +351,9 @@ class SymINDy_class(object):
                 print(logbook.stream)
                 for i in range(ntrees):
                     print(halloffame[0][i])
-        return population, logbook, halloffame
+        if gen == ngen + 1:
+            models = toolbox_local.map(toolbox_local.evaluate, invalid_ind)
+        return population, logbook, halloffame, models
 
     @staticmethod
     def init_stats():
@@ -356,7 +368,6 @@ class SymINDy_class(object):
 
     def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
         """Train SymINDy model on the train data."""
-        # TODO add cross-validation/train-test sets inside the individual test function
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
@@ -446,17 +457,20 @@ class SymINDy_class(object):
         """
         if metric_kwargs is None:
             metric_kwargs = {}
+        fitnesses = []
         # Use R2
-        fitness = -self.model.score(
-            x,
-            t=self.time_rec_obs,
-            x_dot=x_dot,
-            u=u,
-            multiple_trajectories=multiple_trajectories,
-            metric=metric,
-            **metric_kwargs
-        )
-        return fitness
+        for model in self.models:
+            fitness = -model.score(
+                x,
+                t=self.time_rec_obs,
+                x_dot=x_dot,
+                u=u,
+                multiple_trajectories=multiple_trajectories,
+                metric=metric,
+                **metric_kwargs
+            )
+            fitnesses.append(fitness)
+        return fitnesses
 
     def predict(
         self,
