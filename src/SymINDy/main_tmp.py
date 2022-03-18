@@ -5,9 +5,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy as ps
-from deap import creator, gp, tools
+from deap import base, creator, gp, tools
 from sklearn.metrics import r2_score
-import mybase as base
+
 
 from scoop import futures
 from sklearn.metrics import *
@@ -26,6 +26,7 @@ class SymINDy_class(object):
         score_metrics=None,
         score_metrics_kwargs=None,
         nc=1,
+        n_individuals=300,
         sindy_kwargs=None,
         verbose=True,
     ):
@@ -48,6 +49,7 @@ class SymINDy_class(object):
         self.score_metrics = score_metrics
         self.score_metrics_kwargs = score_metrics_kwargs
         self.nc = nc
+        self.n_individuals = n_individuals
         self.sindy_kwargs = sindy_kwargs
         self.verbose = verbose
 
@@ -79,9 +81,7 @@ class SymINDy_class(object):
         size_input = 1 + nc
         intypes = [float for i in range(size_input)]
         # Create a primitive set
-        pset = gp.PrimitiveSetTyped(
-            "MAIN", intypes, float
-        )  # 1)name, 2)type of each input, 3)type of the output
+        pset = gp.PrimitiveSetTyped("MAIN", intypes, float)  # 1)name, 2)type of each input, 3)type of the output
         pset.addPrimitive(np.multiply, [float, float], float, name="mul")
         pset.addPrimitive(np.sin, [float], float, name="sin")
         pset.addPrimitive(np.cos, [float], float, name="cos")
@@ -98,12 +98,8 @@ class SymINDy_class(object):
         )  # subindividual is a primitive tree which is populated from pset
         creator.create("Individual", list, fitness=creator.FitnessMin)
         toolbox = base.Toolbox()
-        toolbox.register(
-            "expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2
-        )  # ? type_=pset.ret is the default of gp.genHalfAndHalf
-        toolbox.register(
-            "subindividual", tools.initIterate, creator.Subindividual, toolbox.expr
-        )
+        toolbox.register("expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2)
+        toolbox.register("subindividual", tools.initIterate, creator.Subindividual, toolbox.expr)
         toolbox.register(
             "individual",
             tools.initRepeat,
@@ -111,25 +107,17 @@ class SymINDy_class(object):
             toolbox.subindividual,
             n=ntrees,
         )
-        toolbox.register(
-            "population", tools.initRepeat, list, toolbox.individual
-        )  # ? the arguments to tools.initRepeat: container, func,
-        # n; container=list, func=toolbox.individual n=? (what is n?)
+        toolbox.register("population", tools.initRepeat, list, toolbox.individual)
         toolbox.register("compile", gp.compile, pset=pset)
         toolbox.register("select", tools.selTournament, tournsize=2)
         toolbox.register("mate", _random_mating_operator)
-        toolbox.register("expr_mut", gp.genHalfAndHalf, min_=0, max_=1)  # ? never used
         toolbox.register("mutate", _random_mutation_operator)
         toolbox.register("map", futures.map)
         history = tools.History()
         toolbox.decorate("mate", history.decorator)
         toolbox.decorate("mutate", history.decorator)
-        toolbox.decorate(
-            "mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2)
-        )
-        toolbox.decorate(
-            "mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2)
-        )
+        toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
+        toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
         return toolbox, creator, pset, history
 
     @staticmethod
@@ -183,6 +171,8 @@ class SymINDy_class(object):
             if x_train.shape[0] < 3:
                 raise ValueError("x_train shall have at least 3 timepounts!")
 
+        validate_input(x_train)
+
         if x_dot_train is not None:
             model.fit(x_train, t=time_rec_obs, x_dot=x_dot_train)
         elif x_dot_train is None:
@@ -200,12 +190,7 @@ class SymINDy_class(object):
         )
         # Add the functionality of using the difference of the numerical integrals using
         # from scipy.integrate import simps
-
-        # store trained model as an attribute #? Maybe change in the future for efficacy
-        # self.model = model
-        return [
-            fitness,
-        ]
+        return [fitness,]
 
     # static method shall solve problems with functool.partial in toolbox.register
     @staticmethod
@@ -293,10 +278,6 @@ class SymINDy_class(object):
 
         # Evaluate the fitness of the first population
         invalid_ind = [ind for ind in population if not ind.fitness.valid]
-
-        ###  partial method object is not callable - we shall dig deeper into this, here is an answer
-        ### https://stackoverflow.com/questions/49662666/unable-to-call-function-defined-by-partialmethod
-
         fitnesses = toolbox_local.map(toolbox_local.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
@@ -336,7 +317,7 @@ class SymINDy_class(object):
                 print(logbook.stream)
                 for i in range(ntrees):
                     print(halloffame[0][i])
-        return population, logbook
+        return population, logbook, halloffame
 
     @staticmethod
     def init_stats():
@@ -350,7 +331,7 @@ class SymINDy_class(object):
         return mstats
 
     def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
-        """Essentially, the key function, which calls everything else"""
+        """Train SymINDy model on the train data."""
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
@@ -371,36 +352,36 @@ class SymINDy_class(object):
         )
 
         mstats = self.init_stats()
-        pop = toolbox.population(n=300)
-        hof = tools.HallOfFame(1)
-
-        self.toolbox = toolbox
-        self.creator = creator
-        self.pset = pset
-        self.history = history
+        # number of individuals in a population
+        pop = toolbox.population(n=self.n_individuals)
+        hof_ = tools.HallOfFame(1)
 
         # Run the evolution
-        pop, log = self.my_eaSimple(
+        pop, log, hof = self.my_eaSimple(
             pop,
-            self.toolbox,
+            toolbox,
             cxpb=self.cxpb,
             mutpb=self.mutpb,
             ngen=self.ngen,
             ntrees=self.ntrees,
             stats=mstats,
-            halloffame=hof,
+            halloffame=hof_,
             verbose=self.verbose,
         )
+        
+        import ipdb; ipdb.set_trace()
+        # store the data
+        self.x_train = x_train
+        self.x_dot_train = x_dot_train
+        self.time_rec_obs = time_rec_obs
 
+        self.toolbox = toolbox
+        self.creator = creator
+        self.pset = pset
+        self.history = history
         self.pop = pop
         self.log = log
         self.hof = hof
-
-        # Store time_rec_obs as an attribute
-        self.time_rec_obs = time_rec_obs
-        import ipdb
-
-        ipdb.set_trace
 
     def score(
         self,
@@ -459,7 +440,7 @@ class SymINDy_class(object):
         x_pred_kwargs=None,
     ):
         """
-		Predict Predict the time derivatives using the SINDy model.
+		Predict the data and its time derivatives using the SINDy model.
 		See pySINDy model.predict for more documentation.
 		https://pysindy.readthedocs.io/en/latest/api/pysindy.html#pysindy.pysindy.SINDy.predict
 		Inpts:
@@ -480,33 +461,22 @@ class SymINDy_class(object):
 			x_dot_pred: array-like or list of array-like, shape (n_samples, n_input_features)
 			 	Predicted time derivatives
 		"""
-        if x_pred_kwargs is not None:
-            x_pred = self.model.silulate(x0, t, u=None, **x_pred_kwargs)
-        else:
-            x_pred = self.model.silulate(x0, t, u=None)
-        if x_dot_pred_kwargs is not None:
-            x_dot_pred = self.model.predict(
-                x, u, multiple_trajectories, **x_dot_pred_kwargs
-            )
-        else:
-            x_pred = self.model.silulate(x0, t, u=None)
+        if x_pred_kwargs is None:
+            x_pred_kwargs = {}
+        if x_dot_pred_kwargs is None:
+            x_dot_pred_kwargs = {}
+        
+        x_pred = self.model.silulate(x0, t, u=None, **x_pred_kwargs)
+        x_dot_pred = self.model.predict(
+                x, u, multiple_trajectories, **x_dot_pred_kwargs)
         return x_pred, x_dot_pred
 
     def plot():
         pass
 
-    # if "__name__" == __main__:
-    #     lib_concat = ConcatLibrary(
-    #         pysindy.feature_library.polynomial_library,
-    #         pysindy.feature_library.FourierLibrary,
-    #     )
-
-
 def main(obs):
-    test = SymINDy_class()
+    test = SymINDy_class(verbose=True)
     test.fit(obs)
-    print(test)
-
     print("Done.")
 
 
