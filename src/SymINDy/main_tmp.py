@@ -54,11 +54,11 @@ class SymINDy_class(object):
         self.verbose = verbose
 
     @staticmethod
-    def configure_DEAP(ntrees=5, nc=1, dimensions=1):
+    def configure_DEAP(ntrees=5, nc=0, dimensions=1):
         """
         Inputs:
                 ntrees -int, number of trees defining an individual. Defualt=5.
-                nc -int, number of symbolic constants associated to the individual. Defualt=1.
+                nc -int, number of symbolic constants associated to the individual. Defualt=0.
                 dimensions - int, Defualt = 1.
         """
 
@@ -78,7 +78,8 @@ class SymINDy_class(object):
             elif roll < 2.66:
                 return gp.mutNodeReplacement(individual, pset=pset)
 
-        size_input = 1 + nc
+        size_input = 2 + nc
+        # TODO let the dimensionality be a function of an input file
         intypes = [float for i in range(size_input)]
         # Create a primitive set
         pset = gp.PrimitiveSetTyped("MAIN", intypes, float)  # 1)name, 2)type of each input, 3)type of the output
@@ -87,7 +88,7 @@ class SymINDy_class(object):
         pset.addPrimitive(np.cos, [float], float, name="cos")
         pset.addPrimitive(np.square, [float], float, name="square")
         pset.renameArguments(ARG0="y")
-        pset.renameArguments(ARG1="p1")
+        pset.renameArguments(ARG1="y_dot")
         # add time as an independent variable, if necessary
         # pset.renameArguments(ARG2='t') # user defined
         creator.create(
@@ -368,7 +369,7 @@ class SymINDy_class(object):
             halloffame=hof_,
             verbose=self.verbose,
         )
-        
+
         import ipdb; ipdb.set_trace()
         # store the data
         self.x_train = x_train
