@@ -54,12 +54,14 @@ class SymINDy_class(object):
         self.verbose = verbose
 
     @staticmethod
-    def configure_DEAP(ntrees=5, nc=0, dimensions=1):
+    def configure_DEAP(ntrees=5, nc=0, dimensions=2, is_time_dependent=False):
         """
         Inputs:
                 ntrees -int, number of trees defining an individual. Defualt=5.
-                nc -int, number of symbolic constants associated to the individual. Defualt=0.
-                dimensions - int, Defualt = 1.
+                nc -int, number of nonlinear parameters (symbolic constants 
+                associated to the individual). Defualt=0.
+                dimensions - int, read from txt files as n columns
+                is_time_dependent - flag, is the system is time-dependent
         """
 
         def _random_mating_operator(ind1, ind2):
@@ -78,17 +80,28 @@ class SymINDy_class(object):
             elif roll < 2.66:
                 return gp.mutNodeReplacement(individual, pset=pset)
 
-        size_input = 2 + nc
+        size_input = dimensions + nc
         # TODO let the dimensionality be a function of an input file
+        if is_time_dependent:
+            size_input += 1
         intypes = [float for i in range(size_input)]
         # Create a primitive set
-        pset = gp.PrimitiveSetTyped("MAIN", intypes, float)  # 1)name, 2)type of each input, 3)type of the output
+        pset = gp.PrimitiveSetTyped(
+            "MAIN", intypes, float
+        )  # 1)name, 2)type of each input, 3)type of the output
         pset.addPrimitive(np.multiply, [float, float], float, name="mul")
         pset.addPrimitive(np.sin, [float], float, name="sin")
         pset.addPrimitive(np.cos, [float], float, name="cos")
         pset.addPrimitive(np.square, [float], float, name="square")
-        pset.renameArguments(ARG0="y")
-        pset.renameArguments(ARG1="y_dot")
+        #        for dim in range(dimensions):
+        #            pset.renameArguments(eval("ARG{}".format(dim) ) = "y{}".format(dim))
+        #        for i in range(nc):
+        #            pset.renameArguments(eval("ARG{}".format(i+dimensions)) = "p{}".format(i))
+
+        # pset.renameArguments(ARG0="y")
+        # pset.renameArguments(ARG1="y_dot")
+        if is_time_dependent:
+            pset.renameArguments(ARG2="time")
         # add time as an independent variable, if necessary
         # pset.renameArguments(ARG2='t') # user defined
         creator.create(
@@ -99,8 +112,12 @@ class SymINDy_class(object):
         )  # subindividual is a primitive tree which is populated from pset
         creator.create("Individual", list, fitness=creator.FitnessMin)
         toolbox = base.Toolbox()
-        toolbox.register("expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2)
-        toolbox.register("subindividual", tools.initIterate, creator.Subindividual, toolbox.expr)
+        toolbox.register(
+            "expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2
+        )
+        toolbox.register(
+            "subindividual", tools.initIterate, creator.Subindividual, toolbox.expr
+        )
         toolbox.register(
             "individual",
             tools.initRepeat,
@@ -117,8 +134,12 @@ class SymINDy_class(object):
         history = tools.History()
         toolbox.decorate("mate", history.decorator)
         toolbox.decorate("mutate", history.decorator)
-        toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
-        toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
+        toolbox.decorate(
+            "mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2)
+        )
+        toolbox.decorate(
+            "mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2)
+        )
         return toolbox, creator, pset, history
 
     @staticmethod
@@ -191,7 +212,9 @@ class SymINDy_class(object):
         )
         # Add the functionality of using the difference of the numerical integrals using
         # from scipy.integrate import simps
-        return [fitness,]
+        return [
+            fitness,
+        ]
 
     # static method shall solve problems with functool.partial in toolbox.register
     @staticmethod
@@ -333,6 +356,7 @@ class SymINDy_class(object):
 
     def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
         """Train SymINDy model on the train data."""
+        # TODO add cross-validation/train-test sets inside the individual test function
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
@@ -370,7 +394,9 @@ class SymINDy_class(object):
             verbose=self.verbose,
         )
 
-        import ipdb; ipdb.set_trace()
+        import ipdb
+
+        ipdb.set_trace()
         # store the data
         self.x_train = x_train
         self.x_dot_train = x_dot_train
@@ -466,14 +492,38 @@ class SymINDy_class(object):
             x_pred_kwargs = {}
         if x_dot_pred_kwargs is None:
             x_dot_pred_kwargs = {}
-        
+
         x_pred = self.model.silulate(x0, t, u=None, **x_pred_kwargs)
         x_dot_pred = self.model.predict(
-                x, u, multiple_trajectories, **x_dot_pred_kwargs)
+            x, u, multiple_trajectories, **x_dot_pred_kwargs
+        )
         return x_pred, x_dot_pred
 
-    def plot():
-        pass
+    def plot_trees(ntrees, expr, save=True, show=False):
+        for i in range(ntrees):
+            tree = plt.figure()
+            nodes, edges, labels = gp.graph(expr[i])
+            g = nx.Graph()
+            g.add_nodes_from(nodes)
+            g.add_edges_from(edges)
+            pos = graphviz_layout(g, prog="dot")
+
+            nx.draw_networkx_nodes(g, pos, node_size=5000, node_color="b")
+            nx.draw_networkx_edges(g, pos, width=2.0, edge_color="k")
+            nx.draw_networkx_labels(g, pos, labels, font_size=20.0, font_color="w")
+
+            plt.axis("off")
+            plt.margins(0.2)
+            # plt.tight_layout()
+            if save == True:
+                cwdir = os.path.join(os.getcwd(), "figures")
+                if not os.path.isdir(cwdir):
+                    os.mkdir(os.path.join(os.getcwd(), "figures"))
+                plt.savefig("figures/tree%s.png" % i)
+            if show == True:
+                plt.show()
+        return
+
 
 def main(obs):
     test = SymINDy_class(verbose=True)
