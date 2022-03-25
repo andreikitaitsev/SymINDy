@@ -13,6 +13,47 @@ from scoop import futures
 from sklearn.metrics import *
 
 
+class library:
+    def __init__(self, nc, dimensions, is_time_dependent, library_name="generalized"):
+        self.nc = nc
+        self.dimensions = dimensions
+        self.library_name = library_name
+        self.is_time_dependent = is_time_dependent
+
+    def create_pset(self):
+        size_input = self.dimensions + self.nc
+        # TODO let the dimensionality be a function of an input file
+        if self.is_time_dependent:
+            size_input += 1
+        intypes = [float for i in range(size_input)]
+        # 1)name, 2)type of each input, 3)type of the output
+        pset = gp.PrimitiveSetTyped("MAIN", intypes, float)  
+        self.pset = pset
+
+    def polynomial_library(self):
+        self.pset.addPrimitive(np.multiply, [float, float], float, name="mul")
+        self.pset.addPrimitive(np.add, [float, float], float, name="add")
+
+    def fourier_library(self):
+        self.pset.addPrimitive(np.sin, [float], float, name="sin")
+        self.pset.addPrimitive(np.cos, [float], float, name="cos")
+
+    def generalized_library(self):
+        self.polynomial_library()
+        self.fourier_library()
+        # call all the libraries
+
+    def __call__(self):
+        self.create_pset()
+        if self.library_name == "polynomial":
+            self.polynomial_library()
+        elif self.library_name == "fourier":
+            self.fourier_library()
+        elif self.library_name == "generalized":
+            self.generalized_library()
+        return self.pset
+
+
 class SymINDy_class(object):
     def __init__(
         self,
@@ -20,12 +61,13 @@ class SymINDy_class(object):
         ntrees=5,
         mutpb=0.8,
         cxpb=0.7,
-        dims=1,
-        library=None,
+        dims=2,
+        library_name="generalized",
+        is_time_dependent=False,
         seed=0,
         score_metrics=None,
         score_metrics_kwargs=None,
-        nc=1,
+        nc=0,
         n_individuals=300,
         sindy_kwargs=None,
         verbose=True,
@@ -36,16 +78,18 @@ class SymINDy_class(object):
                         R2 coefficient of determination (see sindy model score https://pysindy.readthedocs.io/en/latest/api/pysindy.html
                         and sklearn model evaluation for reference, https://scikit-learn.org/stable/modules/model_evaluation).
                 score_metrics_kwargs - key value arguments for scoring function. If None, uses default pySINDy score kwargs.
+                is_time_dependent - bool flag, add time as an independent variable, if necessary. Default False
+
         """
         self.ngen = ngen
         self.ntrees = ntrees
         self.mutpb = mutpb
         self.cxpb = cxpb
         self.dims = dims
-        self.library = library  # create library object here
+        self.library_name = library_name
         self.seed = seed
         random.seed(seed)
-        # add verbal encoding of different scoring functions
+        self.is_time_dependent = is_time_dependent
         self.score_metrics = score_metrics
         self.score_metrics_kwargs = score_metrics_kwargs
         self.nc = nc
@@ -53,13 +97,12 @@ class SymINDy_class(object):
         self.sindy_kwargs = sindy_kwargs
         self.verbose = verbose
 
-    @staticmethod
-    def configure_DEAP(ntrees=5, nc=0, dimensions=2, is_time_dependent=False):
+    def configure_DEAP(self, ntrees=5, nc=0, dimensions=2, is_time_dependent=False):
         """
         Inputs:
                 ntrees -int, number of trees defining an individual. Defualt=5.
                 nc -int, number of nonlinear parameters (symbolic constants 
-                associated to the individual). Defualt=0.
+                    associated to the individual). Defualt=0.
                 dimensions - int, read from txt files as n columns
                 is_time_dependent - flag, is the system is time-dependent
         """
@@ -80,68 +123,71 @@ class SymINDy_class(object):
             elif roll < 2.66:
                 return gp.mutNodeReplacement(individual, pset=pset)
 
-        size_input = dimensions + nc
-        # TODO let the dimensionality be a function of an input file
-        if is_time_dependent:
-            size_input += 1
-        intypes = [float for i in range(size_input)]
-        # Create a primitive set
-        pset = gp.PrimitiveSetTyped(
-            "MAIN", intypes, float
-        )  # 1)name, 2)type of each input, 3)type of the output
-        pset.addPrimitive(np.multiply, [float, float], float, name="mul")
-        pset.addPrimitive(np.sin, [float], float, name="sin")
-        pset.addPrimitive(np.cos, [float], float, name="cos")
-        pset.addPrimitive(np.add, [float, float], float, name="add")
-        pset.addPrimitive(np.exp, [float], float, name="mul")
+        def _rename_args(pset, nc, dimensions, is_time_dependent):
+            '''Rename arguments in primitive set.
+            Inputs:
+                pset - primitive set
+                nc -int, number of nonlinear parameters (symbolic constants 
+                    associated to the individual).
+                dimensions - int, read from txt files as n columns
+                is_time_dependent - flag, is the system is time-dependent
+            Outputs:
+                pset - primitive set with renamed arguments.
+                    (first nc arguments come from nc, from nc to
+                    dimensions + nc - dimensions, last argument is time if
+                    is_time_dependent is True.)
+            '''
+            argnames = {}
+            for dim in range(dimensions):
+               argnames["ARG{}".format(dim)]="y{}".format(dim)
+            for i in range(nc):
+                argnames["ARG{}".format(i+dimensions)] = "p{}".format(i)
+            if is_time_dependent:
+                argnames["ARG{}".format(len(argnames))]='t'
+            pset.renameArguments(**argnames)
+            return pset
 
-        #        for dim in range(dimensions):
-        #            pset.renameArguments(eval("ARG{}".format(dim) ) = "y{}".format(dim))
-        #        for i in range(nc):
-        #            pset.renameArguments(eval("ARG{}".format(i+dimensions)) = "p{}".format(i))
-
-        # pset.renameArguments(ARG0="y")
-        # pset.renameArguments(ARG1="y_dot")
-        if is_time_dependent:
-            pset.renameArguments(ARG2="time")
-        # add time as an independent variable, if necessary
-        # pset.renameArguments(ARG2='t') # user defined
-        creator.create(
-            "FitnessMin", base.Fitness, weights=(-1.0,)
-        )  # weights=-1 to indicate minimization
-        creator.create(
-            "Subindividual", gp.PrimitiveTree
-        )  # subindividual is a primitive tree which is populated from pset
-        creator.create("Individual", list, fitness=creator.FitnessMin)
-        toolbox = base.Toolbox()
-        toolbox.register(
-            "expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2
+        def _create_toolbox(pset, ntrees):
+            '''Create a deap toolbox, creator and history objects.
+            Inputs:
+                pset - primitive set to register in the toolbox
+                ntrees - number of trees of symbolic expressions per subindividual
+            Outputs:
+                toolbox, creator, history'''
+             # weights=-1 to indicate minimization
+            creator.create("FitnessMin", base.Fitness, weights=(-1.0,)) 
+            # subindividual is a primitive tree which is populated from pset
+            creator.create("Subindividual", gp.PrimitiveTree)  
+            creator.create("Individual", list, fitness=creator.FitnessMin)
+            toolbox = base.Toolbox()
+            toolbox.register("expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2)
+            toolbox.register("subindividual", tools.initIterate, creator.Subindividual, toolbox.expr)
+            toolbox.register("individual",tools.initRepeat,creator.Individual,\
+                toolbox.subindividual, n=ntrees)
+            toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+            toolbox.register("compile", gp.compile, pset=pset)
+            toolbox.register("select", tools.selTournament, tournsize=2)
+            toolbox.register("mate", _random_mating_operator)
+            toolbox.register("mutate", _random_mutation_operator)
+            toolbox.register("map", futures.map)
+            history = tools.History()
+            toolbox.decorate("mate", history.decorator)
+            toolbox.decorate("mutate", history.decorator)
+            toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
+            toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
+            return toolbox, creator, history
+        import ipdb; ipdb.set_trace()
+        lib = library(
+            nc,
+            dimensions,
+            is_time_dependent=self.is_time_dependent,
+            library_name=self.library_name
         )
-        toolbox.register(
-            "subindividual", tools.initIterate, creator.Subindividual, toolbox.expr
-        )
-        toolbox.register(
-            "individual",
-            tools.initRepeat,
-            creator.Individual,
-            toolbox.subindividual,
-            n=ntrees,
-        )
-        toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-        toolbox.register("compile", gp.compile, pset=pset)
-        toolbox.register("select", tools.selTournament, tournsize=2)
-        toolbox.register("mate", _random_mating_operator)
-        toolbox.register("mutate", _random_mutation_operator)
-        toolbox.register("map", futures.map)
-        history = tools.History()
-        toolbox.decorate("mate", history.decorator)
-        toolbox.decorate("mutate", history.decorator)
-        toolbox.decorate(
-            "mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2)
-        )
-        toolbox.decorate(
-            "mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2)
-        )
+        pset = lib()
+        
+        pset = _rename_args(pset, nc, dimensions, self.is_time_dependent)
+        
+        toolbox, creator, history = _create_toolbox(pset, ntrees)
         return toolbox, creator, pset, history
 
     @staticmethod
@@ -162,7 +208,7 @@ class SymINDy_class(object):
         https://pysindy.readthedocs.io/en/latest/api/pysindy.html#module-pysindy.pysindy
         Inputs:
                 individual - list of individuals (individuals with invalid fitness)
-                ntrees
+                ntrees - number of trees of symbolic expressions per subindividual
                 toolbox - deap base toolbox instance
                 x_train - np array, training data
                 x_dot_train - precomputed derivatives of the training data, optional. Defualt=None, no
@@ -249,7 +295,7 @@ class SymINDy_class(object):
                 cxpb – The probability of mating two individuals.
                 mutpb – The probability of mutating an individual.
                 ngen – The number of generation.
-                ntrees
+                ntrees - number of trees of symbolic expressions per subindividual
                 stats – A DEAP Statistics object that is updated inplace. Default=None.
                 halloffame – A DEAP HallOfFame object that will contain the best individuals. Default=None.
                 verbose – Whether or not to log the statistics. Default=__debug__.
