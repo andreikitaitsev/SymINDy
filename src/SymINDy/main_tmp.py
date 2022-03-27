@@ -1,3 +1,4 @@
+from json import tool
 import operator
 import random
 
@@ -180,6 +181,7 @@ class SymINDy_class(object):
             toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
             toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
             return toolbox, creator, history
+
         lib = library(
             nc,
             dimensions,
@@ -212,7 +214,7 @@ class SymINDy_class(object):
         For additional documentation see SINDy model docs
         https://pysindy.readthedocs.io/en/latest/api/pysindy.html#module-pysindy.pysindy
         Inputs:
-                individual - list of individuals (individuals with invalid fitness)
+                individual - list of subindividuals (with invalid fitness)
                 ntrees - number of trees of symbolic expressions per subindividual
                 toolbox - deap base toolbox instance
                 x_train - np array, training data
@@ -276,7 +278,6 @@ class SymINDy_class(object):
             score_metrics = r2_score
         if score_metrics_kwargs is None:
             score_metrics_kwargs = {}
-        
         # if train test split, split train set into train and test subsets
         if tr_te_ratio is not None:
             x_train_tr = x_train[:int(tr_te_ratio*len(x_train))]
@@ -291,9 +292,14 @@ class SymINDy_class(object):
 
         # if train test split, fit the model on train set and score on test set
         if tr_te_ratio is not None:
-            model = fit_sindy_model(model, x_train_tr, x_dot_train_tr)
-            model, fitness = score_sindy_model(x_train_te, time_rec_obs, x_dot_train_te,
-                score_metrics, score_metrics_kwargs)
+            if x_dot_train is not None:
+                model = fit_sindy_model(model, x_train_tr, x_dot_train_tr)
+                model, fitness = score_sindy_model(x_train_te, time_rec_obs, x_dot_train_te,
+                    score_metrics, score_metrics_kwargs)
+            else:
+                model = fit_sindy_model(model, x_train_tr, x_dot_train)
+                model, fitness = score_sindy_model(x_train_te, time_rec_obs, x_dot_train,
+                    score_metrics, score_metrics_kwargs)
         else:
             model = fit_sindy_model(model, x_train, x_dot_train)
             model, fitness = score_sindy_model(x_train, time_rec_obs, x_dot_train,
@@ -357,6 +363,8 @@ class SymINDy_class(object):
                     mutpb - float, is the probability for mutating an individual
             Outputs:
                     offspring - a "list" of varied individuals that are independent of their parents (deepcopied)
+                    halloffame - deap halloffame object. Contains the best individual that
+                        ever lived in the popultion (best over all generations)
             """
             # Create an offspring list sampled from the population
             offspring = [toolbox_local.clone(ind) for ind in population]
@@ -430,8 +438,6 @@ class SymINDy_class(object):
                 print(logbook.stream)
                 for i in range(ntrees):
                     print(halloffame[0][i])
-        #TODO retrieve final model here
-        model = toolbox_local.map(toolbox_local.evaluate, invalid_ind)
         return population, logbook, halloffame
 
     @staticmethod
@@ -452,7 +458,7 @@ class SymINDy_class(object):
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
         )
 
-        # Add arguments from init
+        # Register evaluation fucntion (add arguments from init)
         toolbox.register(
             "evaluate",
             self.evalSymbReg,
@@ -464,6 +470,24 @@ class SymINDy_class(object):
             sindy_kwargs=self.sindy_kwargs,
             score_metrics=self.score_metrics,
             score_metrics_kwargs=self.score_metrics_kwargs,
+            flag_solution=False,
+            tr_te_ratio=0.8
+        )
+
+        # Register function to train SINDy model and retrieve it
+        toolbox.register(
+            "retrieve_model",
+            self.evalSymbReg,
+            ntrees=self.ntrees,
+            toolbox=toolbox,
+            x_train=x_train,
+            x_dot_train=x_dot_train,
+            time_rec_obs=time_rec_obs,
+            sindy_kwargs=self.sindy_kwargs,
+            score_metrics=self.score_metrics,
+            score_metrics_kwargs=self.score_metrics_kwargs,
+            flag_solution=True,
+            tr_te_ratio=0.8
         )
 
         mstats = self.init_stats()
@@ -484,7 +508,10 @@ class SymINDy_class(object):
             verbose=self.verbose,
         )
 
-        # store the data
+        # Train SINDy model with the best individual
+        final_model = toolbox.retrieve_model(hof[0])
+
+        # store the data as attributes
         self.x_train = x_train
         self.x_dot_train = x_dot_train
         self.time_rec_obs = time_rec_obs
@@ -493,16 +520,17 @@ class SymINDy_class(object):
         self.creator = creator
         self.pset = pset
         self.history = history
-        self.pop = pop
+        self.population = pop
         self.log = log
-        self.hof = hof
+        self.hof = hof # best individual that ever lived
+        self.final_model = final_model
 
     def score(
         self,
         x,
-        t=None,
         x_dot=None,
         u=None,
+        t=None,
         multiple_trajectories=False,
         metric=r2_score,
         metric_kwargs=None,
@@ -533,20 +561,20 @@ class SymINDy_class(object):
         """
         if metric_kwargs is None:
             metric_kwargs = {}
-        fitnesses = []
         # Use R2
-        for model in self.models:
-            fitness = -model.score(
-                x,
-                t=self.time_rec_obs,
-                x_dot=x_dot,
-                u=u,
-                multiple_trajectories=multiple_trajectories,
-                metric=metric,
-                **metric_kwargs
-            )
-            fitnesses.append(fitness)
-        return fitnesses
+        if t is None:
+            t = self.time_rec_obs
+
+        fitness = -self.final_model.score(
+            x,
+            t=t,
+            x_dot=x_dot,
+            u=u,
+            multiple_trajectories=multiple_trajectories,
+            metric=metric,
+            **metric_kwargs
+        )
+        return fitness
 
     def predict(
         self,
@@ -563,6 +591,8 @@ class SymINDy_class(object):
 		Inpts:
 			x: array-like or list of array-like, shape (n_samples, n_input_features)
 				Samples
+            t - float, numpy array of shape (n_samples,), or list of numpy arrays, optional
+                (default None)
 			u: array-like or list of array-like, shape(n_samples, n_control_features), \
 					(default None)
 				Control variables. If ``multiple_trajectories==True`` then u
@@ -583,8 +613,8 @@ class SymINDy_class(object):
         if x_dot_pred_kwargs is None:
             x_dot_pred_kwargs = {}
 
-        x_pred = self.model.silulate(x0, t, u=None, **x_pred_kwargs)
-        x_dot_pred = self.model.predict(
+        x_pred = self.final_model.simulate(x0, t, u=None, **x_pred_kwargs)
+        x_dot_pred = self.final_model.predict(
             x, u, multiple_trajectories, **x_dot_pred_kwargs
         )
         return x_pred, x_dot_pred
