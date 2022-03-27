@@ -49,3 +49,15 @@ Can we also do something with divergence? Gradient? Do we need measurements in s
 
 It makes sense to add a flag for the user stating whether the system is autonomous or non autonomus: if it is not,
 time is added as an additional state variable, and so we are then able to obtain \ddot{x} = - k x + sin (sin(\omega t)), for example.
+
+## TODO
+<ol>
+ <li>Fix <em>predict</em> and <em>plot_trees</em> functions</li>
+ <li>Get rid of text files for the input systems</li>
+ <li>Vector inputs</li>
+  <ol>
+   <li>Enable vector inputs for the input data</li>
+   <li>Add functions for vector inputs to library (e.g. norm)</li>
+ </ol>
+ <li>Add sparsity parameter to select the best individual (the simplicity of the symbolic expression).</li>
+</ol>
