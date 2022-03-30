@@ -3,6 +3,7 @@ import operator
 import random
 
 import matplotlib as mpl
+from matplotlib import lines
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy as ps
@@ -625,16 +626,19 @@ class SymINDy_class(object):
 if __name__ == "__main__":
     from sklearn.model_selection import train_test_split
     import matplotlib.pyplot as plt
+    from copy import copy
     def plot(fig, ax, data, ngen):
-        ax.plot(data["x_te"])
-        ax.plot(data["x_te_pred"])
+        ax.plot(data["x_te"][:,0], color='b', linestyle='dashed')
+        ax.plot(data["x_te"][:,1], color='b', linestyle='solid')
+        ax.plot(data["x_te_pred"][:,0], color='r', linestyle='dashed')
+        ax.plot(data["x_te_pred"][:,1], color='r', linestyle='solid')
         ax.set_xlabel('Time')
         ax.set_ylabel('Amplitude(values)')
         ax.set_title(f"{ngen} generations, R2(x - x_pred)={data['x_score']}")
-        fig.legend(['x test', 'x test predicted'])
+        fig.legend(['x test var1', 'x test var2','x test predicted var1', 'x test predicted var2'])
         return fig
 
-    def run(ngens=[5,10,20]):
+    def run(ngens=[2,5,10]):
         simulator = myspring()
         x, xdot, time = simulator.simulate()
         # split ibservation into train-test sets
@@ -644,10 +648,41 @@ if __name__ == "__main__":
         xdot_tr, xdot_te = split(xdot, ratio)
         time_tr, time_te = split(time, ratio)
         
+        x_te_preds = []
+        xdot_te_preds = []
+        x_scores=[]
+        estimators = []
         fig, axs = plt.subplots(len(ngens))
-        for n, ngen in enumerate(ngens):
+#        for n, ngen in enumerate(ngens):
+#            # configure SymIDNy
+#            estimator = SymINDy_class(verbose=True, ngen=ngen)
+#            
+#            # fit on train data
+#            estimator.fit(x_tr, xdot_tr, time_tr)
+#            
+#            # predict test data
+#            x_te_pred, xdot_te_pred = estimator.predict(x_te[0], time_te)
+#    
+#            # correlation between x_te
+#            x_score, xdot_score =estimator.score(x_te, x_te_pred, 
+#                xdot_te, xdot_te_pred)
+#            print(f'x_score {x_score:.3f} \n xdot_score {xdot_score}.')
+#
+#            # collect the data
+#            data = {"x_te":x_te, "x_te_pred":x_te_pred, "x_score":x_score}
+#
+#            # add subplot
+#            fig = plot(fig, axs[n], data, ngen)
+#
+#            estimators.append(copy(estimator))
+#            x_te_preds.append(x_te_pred)
+#            xdot_te_preds.append(xdot_te_pred)
+#            del estimator, x_te_pred, xdot_te_pred, x_score, xdot_score, data
+
+        libs= ['polynomial','fourier', 'generalized']
+        for n, lib in enumerate(libs):
             # configure SymIDNy
-            estimator = SymINDy_class(verbose=True, ngen=ngen)
+            estimator = SymINDy_class(verbose=True, library_name=lib)
             
             # fit on train data
             estimator.fit(x_tr, xdot_tr, time_tr)
@@ -658,14 +693,21 @@ if __name__ == "__main__":
             # correlation between x_te
             x_score, xdot_score =estimator.score(x_te, x_te_pred, 
                 xdot_te, xdot_te_pred)
-            print(f'x_score {x_score} \n xdot_score {xdot_score}.')
+            x_scores.append(x_score)
+            print(f'x_score {x_score:.3f} \n xdot_score {xdot_score}.')
 
             # collect the data
             data = {"x_te":x_te, "x_te_pred":x_te_pred, "x_score":x_score}
 
             # add subplot
-            fig = plot(fig, axs[n], data, ngen)
+            fig = plot(fig, axs[n], data, len(libs))
+
+            estimators.append(copy(estimator))
+            x_te_preds.append(x_te_pred)
+            xdot_te_preds.append(xdot_te_pred)
             del estimator, x_te_pred, xdot_te_pred, x_score, xdot_score, data
+
+        import ipdb; ipdb.set_trace()
         plt.show()
 
     # Demo
