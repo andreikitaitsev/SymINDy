@@ -1,3 +1,15 @@
 build/
-*.png
 *.txt
+
+
+# figures
+*.png
+*.jpg
+
+# swp vim files
+*.swp
+
+# venv
+env1/
+
+

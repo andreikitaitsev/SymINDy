@@ -71,9 +71,12 @@ def run(var_par, legend=None):
         # collect the data
         data = {"x_te":x_te, "x_te_pred":x_te_pred, "x_score":x_score}
 
-        # add subplot
+        # plot real and predicted system
         title = 'R2: {:.2f} '.format(x_score) + str(par_dict.keys()) + str(par_dict.values())
         fig = plot_myspring(fig, axs[n], data, title, legend)
+
+        # plot expression tree
+        fig_, ax = estimator.plot_trees()
 
         estimators.append(copy(estimator))
         x_te_preds.append(x_te_pred)
@@ -91,9 +94,11 @@ if __name__=='__main__':
 
     fignames = ('var-libs-v1', 'var-ngens-v1', 'var-n_inds-v1')
     for n, var_par in enumerate(var_pars):
+        # run symb regr
         fig, x_scores = run(var_par)
         # save fig
         path=Path().cwd().joinpath('figures')
         if not path.is_dir():
             path.mkdir()
         fig.savefig(path.joinpath((fignames[n]+'.png')), dpi=300)
+        plt.show()
