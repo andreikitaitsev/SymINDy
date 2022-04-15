@@ -13,7 +13,6 @@ from scipy.integrate import solve_ivp
 import networkx as nx
 from scoop import futures
 from sklearn.metrics import *
-from networkx.drawing.nx_agraph import graphviz_layout
 
 #TODO tmp class, later move to separate file
 #TODO make myspring return xdot
@@ -602,27 +601,22 @@ class SymINDy_class(object):
     def plot_trees(self, save=True, show=True):
         '''Plot tree of the best individuals (hof[0]).'''
         expr=self.hof[0]
-        for i in range(self.ntrees):
-            fig, ax = plt.subplots()
+        fig, axs = plt.subplots(int(np.floor(self.ntrees/2)), 
+            int(np.ceil(self.ntrees/2)), figsize=(16,9))
+        for i, ax in zip(range(self.ntrees), np.ravel(axs)):
             nodes, edges, labels = gp.graph(expr[i])
             g = nx.Graph()
             g.add_nodes_from(nodes)
             g.add_edges_from(edges)
-            pos = graphviz_layout(g, prog="dot")
+            pos = nx.spring_layout(g)
 
-            nx.draw_networkx_nodes(g, pos, node_size=5000, node_color="b", axis=ax)
-            nx.draw_networkx_edges(g, pos, width=2.0, edge_color="k", axis=ax)
-            nx.draw_networkx_labels(g, pos, labels, font_size=20.0, font_color="w", axis=ax)
-
-            plt.margins(0.2)
-            plt.tight_layout()
-#            if save == True:
-#                cwdir = os.path.join(os.getcwd(), "figures")
-#                if not os.path.isdir(cwdir):
-#                    os.mkdir(os.path.join(os.getcwd(), "figures"))
-#                plt.savefig("figures/tree%s.png" % i)
-            if show == True:
-                plt.show()
+            nx.draw_networkx_nodes(g, pos, node_color="b", ax=ax)
+            nx.draw_networkx_edges(g, pos, width=2.0, edge_color="k", ax=ax)
+            nx.draw_networkx_labels(g, pos, labels, font_size=20, font_color="k", ax=ax)
+        plt.margins(0.2)
+        plt.tight_layout()
+        if show == True:
+            plt.show()
         return fig, ax
 
 if __name__ == "__main__":
