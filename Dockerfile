@@ -12,6 +12,6 @@ COPY requirements.txt .
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
 
-COPY ./src ./scr
+COPY ./src ./src
 COPY ./*.py .
 CMD ["python3", "var-par-v1.py"] 
