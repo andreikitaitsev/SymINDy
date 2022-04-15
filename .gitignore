@@ -12,4 +12,6 @@ build/
 # venv
 env1/
 
-
+# do not ignore
+!.gitignore
+!requirements.txt
