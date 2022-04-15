@@ -1,5 +1,7 @@
 build/
 *.txt
+*.pyc
+__pycache__/
 
 
 # figures
