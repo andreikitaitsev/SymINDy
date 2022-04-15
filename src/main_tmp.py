@@ -2,8 +2,6 @@ from json import tool
 import operator
 import random
 
-import matplotlib as mpl
-from matplotlib import lines
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy as ps
@@ -11,7 +9,7 @@ from deap import base, creator, gp, tools
 from sklearn.metrics import r2_score
 from scipy.integrate import solve_ivp
 import networkx as nx
-from scoop import futures
+#from scoop import futures
 from sklearn.metrics import *
 
 #TODO tmp class, later move to separate file
@@ -206,7 +204,7 @@ class SymINDy_class(object):
             toolbox.register("select", tools.selTournament, tournsize=2)
             toolbox.register("mate", _random_mating_operator)
             toolbox.register("mutate", _random_mutation_operator)
-            toolbox.register("map", futures.map)
+            toolbox.register("map", map)#futures.map)
             history = tools.History()
             toolbox.decorate("mate", history.decorator)
             toolbox.decorate("mutate", history.decorator)
@@ -598,7 +596,7 @@ class SymINDy_class(object):
             xdot_score = None
         return x_score, xdot_score
 
-    def plot_trees(self, save=True, show=True):
+    def plot_trees(self, show=False):
         '''Plot tree of the best individuals (hof[0]).'''
         expr=self.hof[0]
         fig, axs = plt.subplots(int(np.floor(self.ntrees/2)), 
@@ -608,12 +606,12 @@ class SymINDy_class(object):
             g = nx.Graph()
             g.add_nodes_from(nodes)
             g.add_edges_from(edges)
-            pos = nx.spring_layout(g)
-
-            nx.draw_networkx_nodes(g, pos, node_color="b", ax=ax)
-            nx.draw_networkx_edges(g, pos, width=2.0, edge_color="k", ax=ax)
-            nx.draw_networkx_labels(g, pos, labels, font_size=20, font_color="k", ax=ax)
+            pos=nx.nx_agraph.pygraphviz_layout(g, prog="dot")
+            nx.draw(g, pos, with_labels=True, ax=ax, labels=labels,
+            node_color='#99CCFF', edge_color="k", font_size=20, font_color="k")
+            ax.set_axis_off()
         plt.margins(0.2)
+        plt.axis("off")
         plt.tight_layout()
         if show == True:
             plt.show()

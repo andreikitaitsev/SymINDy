@@ -71,7 +71,7 @@ def run(var_par, legend=None):
         x_score, xdot_score = estimator.score(x_te, x_te_pred, 
             xdot_te, xdot_te_pred)
         x_scores.append(x_score)
-        print(f'x_score {x_score:.3f} \n xdot_score {xdot_score}.')
+        print(f'x_score {x_score:.3f} \nxdot_score {xdot_score}.')
 
         # collect the data
         data = {"x_te":x_te, "x_te_pred":x_te_pred, "x_score":x_score}
@@ -109,4 +109,4 @@ if __name__=='__main__':
             path.mkdir()
         fig_sys.savefig(path.joinpath(('systems-'+fignames[n]+'.png')), dpi=300)
         fig_tree.savefig(path.joinpath(('trees-'+fignames[n]+'.png')), dpi=300)
-        plt.show()
+    plt.show()
