@@ -2,7 +2,7 @@
 Note, to use scoop launch the script with python -m scoop var-par-v1.py
 '''
 
-from main_tmp import myspring, SymINDy_class
+from src.main_tmp import myspring, SymINDy_class
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from copy import copy

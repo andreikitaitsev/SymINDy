@@ -6,7 +6,7 @@ RUN apt update
 RUN apt install python3.8 -y
 RUN apt install python3-pip -y
 # igraphviz requres separate installation
-RUN apt install graphviz -y
+CMD ["yes n | apt install graphviz"] 
 
 COPY requirements.txt .
 RUN pip3 install --upgrade pip
