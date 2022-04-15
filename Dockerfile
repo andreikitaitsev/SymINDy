@@ -3,7 +3,7 @@ RUN apt update
 # optional 
 #RUN apt install software-properties-common -y
 
-RUN apt install python3.8.10 -y
+RUN apt install python3.8 -y
 RUN apt install python3-pip -y
 # igraphviz requres separate installation
 RUN apt install graphviz -y
