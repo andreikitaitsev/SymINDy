@@ -13,6 +13,7 @@ __pycache__/
 
 # venv
 env1/
+venv/
 
 # do not ignore
 !.gitignore
