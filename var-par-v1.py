@@ -39,7 +39,7 @@ def run(var_par, legend=None):
         x_scores - scores
     '''
     # simulate system
-    simulator = myspring()
+    simulator = myspring(time=100, nsamples=1000)
     x, xdot, time = simulator.simulate()
     # split observations into train-test sets
     split = lambda x, ratio: (x[:int(ratio*len(x))], x[int(ratio*len(x)):]) if x is not None else (None, None)
@@ -95,7 +95,7 @@ def run(var_par, legend=None):
 if __name__=='__main__':
     from pathlib import Path
     var_pars = [
-        [ {'library_name': 'polynomial'}, {'library_name':'fourier'}, {'library_name': 'generalized'}],
+        #[ {'library_name': 'polynomial'}, {'library_name':'fourier'}, {'library_name': 'generalized'}],
         [ {'ngen': 5}, {'ngen': 20}, {'ngen': 50}],
         [ {'n_individuals': 50}, {'n_individuals': 30}, {'n_individuals': 1000}]
     ]

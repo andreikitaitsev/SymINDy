@@ -1,10 +1,11 @@
+from pkg_resources import to_filename
 from scipy.integrate import solve_ivp
 import numpy as np
 
 class myspring:
     '''
     xdot = v
-    vdot = - k x - v c + A sin(x**2)
+    vdot = - k x - v c + F sin(x**2)
     '''
     def __init__(self,
         x0=np.array([0.4, 1.6]),
@@ -27,6 +28,7 @@ class myspring:
             return [x[1], -self.k * x[0] - self.c * x[1] + self.F0 * np.sin(x[0] ** 2)]
         t_eval = np.linspace(0, self.time, self.nsamples)
         x = solve_ivp(dxdt, y0=self.x0, t_span=[0, self.time], t_eval=t_eval).y
+        xdot = dxdt(t_eval, x)
+        xdot = np.array(xdot).T
         x = x.T
-        xdot = None
         return x, xdot, t_eval
