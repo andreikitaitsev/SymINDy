@@ -2,7 +2,8 @@ build/
 *.txt
 *.pyc
 __pycache__/
-
+*.egg
+*.egg-info/
 
 # figures
 *.png
