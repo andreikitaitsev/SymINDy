@@ -1,3 +1,6 @@
 build/
 *.png
 *.txt
+*.egg
+*.egg-info/
+__pycache__/
