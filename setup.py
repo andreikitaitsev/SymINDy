@@ -19,6 +19,6 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
-    python_requires=">= 3.9",
+    python_requires=">= 3.7",
     entry_points={"console_scripts": ["SymINDy=SymINDy.__main__:cli"]},
 )

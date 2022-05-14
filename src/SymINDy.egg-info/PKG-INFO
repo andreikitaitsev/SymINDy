@@ -6,7 +6,7 @@ Home-page: UNKNOWN
 Author: Matteo Manzi, Andrei Kitaitsev
 License: UNKNOWN
 Platform: UNKNOWN
-Requires-Python: >= 3.9
+Requires-Python: >= 3.7
 License-File: LICENSE
 
 UNKNOWN

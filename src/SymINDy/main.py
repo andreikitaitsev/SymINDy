@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pysindy as ps
 from deap import base, creator, gp, tools
+
 from scoop import futures
 from sklearn.metrics import *
 from SymINDy.ourbase import Toolbox
@@ -131,13 +132,20 @@ class SymINDy_class(object):
         return toolbox, creator, pset, history
 
     def evalSymbReg(
-        self, individual, x_train, x_dot_train, time_rec_obs=None, sindy_kwargs=None # 04-03-22: x_train, x_dot_train and time_rec_obs are all empty here.
+        self,
+        individual,
+        toolbox,
+        x_train,
+        x_dot_train,
+        time_rec_obs=None,
+        sindy_kwargs=None,
     ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
         https://pysindy.readthedocs.io/en/latest/api/pysindy.html#module-pysindy.pysindy
         Inputs:
-                individual -
+                individual - list of individuals (individuals with invalid fitness)
+                toolbox - deap base toolbox instance
                 x_train - np array, training data
                 x_dot_train - precomputed derivatives of the training data, optional. Defualt=None, no
                         precomputed derivatives (SINDY computes it using specified differentiation method).
@@ -157,6 +165,9 @@ class SymINDy_class(object):
         # import ipdb; ipdb.set_trace()
         # Transform the tree expression in a callable function
         sr_functions = []
+        import ipdb
+
+        ipdb.set_trace()
         for i in range(self.ntrees):
             sr_functions.append(self.toolbox.compile(expr=individual[i]))
         library = ps.CustomLibrary(library_functions=sr_functions)
@@ -189,17 +200,13 @@ class SymINDy_class(object):
             fitness,
         ]
 
+    # ? If works, add the new method to the base, not to add custom deap to the requirements
     @staticmethod
     def add_evalfunc_to_toolbox(
         toolbox, eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
     ):
-        # print(x_train)
-        # print(x_dot_train)
-        # print(time_rec_obs)
-
         toolbox.register_eval(
             "evaluate", eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs)
-
         return toolbox
 
     # ? consider making it a staticmethod
@@ -286,6 +293,12 @@ class SymINDy_class(object):
 
         # Evaluate the fitness of the first population
         invalid_ind = [ind for ind in population if not ind.fitness.valid]
+        import ipdb
+
+        ipdb.set_trace()
+        ###  partial method object is not callable - we shall dig deeper into this, here is an answer
+        ### https://stackoverflow.com/questions/49662666/unable-to-call-function-defined-by-partialmethod
+
         fitnesses = toolbox_local.map(toolbox_local.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
@@ -487,3 +500,8 @@ def main(obs, obs_time):
     print(test)
 
     print("Done.")
+
+
+if __name__ == "__main__":
+    obs = np.loadtxt("myspring.txt")
+    main(obs)
