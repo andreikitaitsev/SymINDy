@@ -25,3 +25,4 @@ def prop(system, time):
         # SymINDy (pysindy) requires x to be of shape (timesteps, systems (equations))
         obs = obs.T
         np.savetxt("myspring.txt", obs)
+        np.savetxt('myspringtime.txt', t_eval)

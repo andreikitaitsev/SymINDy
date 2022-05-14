@@ -9,6 +9,7 @@ from deap import base, creator, gp, tools
 
 from scoop import futures
 from sklearn.metrics import *
+from SymINDy.ourbase import Toolbox
 
 
 class SymINDy_class(object):
@@ -95,7 +96,7 @@ class SymINDy_class(object):
             "Subindividual", gp.PrimitiveTree
         )  # subindividual is a primitive tree which is populated from pset
         creator.create("Individual", list, fitness=creator.FitnessMin)
-        toolbox = base.Toolbox()
+        toolbox = Toolbox()
         toolbox.register(
             "expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=1, max_=2
         )  # ? type_=pset.ret is the default of gp.genHalfAndHalf
@@ -156,14 +157,19 @@ class SymINDy_class(object):
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
         """
+        print(self)
+        print(individual)
+        print(x_train)
+        print(x_dot_train)
+        print(time_rec_obs)
+        # import ipdb; ipdb.set_trace()
         # Transform the tree expression in a callable function
         sr_functions = []
         import ipdb
 
         ipdb.set_trace()
         for i in range(self.ntrees):
-            # ? Does it create an individual anew every time when called?
-            sr_functions.append(toolbox.compile(expr=individual[i]))
+            sr_functions.append(self.toolbox.compile(expr=individual[i]))
         library = ps.CustomLibrary(library_functions=sr_functions)
 
         if sindy_kwargs is not None:
@@ -200,14 +206,7 @@ class SymINDy_class(object):
         toolbox, eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs
     ):
         toolbox.register_eval(
-            "evaluate",
-            eval_func,
-            toolbox,
-            x_train,
-            x_dot_train,
-            time_rec_obs,
-            sindy_kwargs,
-        )
+            "evaluate", eval_func, x_train, x_dot_train, time_rec_obs, sindy_kwargs)
         return toolbox
 
     # ? consider making it a staticmethod
@@ -495,9 +494,9 @@ class SymINDy_class(object):
     #     )
 
 
-def main(obs):
+def main(obs, obs_time):
     test = SymINDy_class()
-    test.fit(obs)
+    test.fit(obs, time_rec_obs=obs_time)
     print(test)
 
     print("Done.")

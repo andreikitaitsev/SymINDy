@@ -53,10 +53,13 @@ def propagate(system, time):
     help="Dynamical System.",
 )
 def train(system):
-    filename = system + ".txt"
-    obs = np.loadtxt(filename)
+    obs_filename = system + ".txt"
+    obs = np.loadtxt(obs_filename)
+
+    time_filename = system + "time.txt"
+    obs_time = np.loadtxt(time_filename)
     # print(obs)
-    main(obs)
+    main(obs, obs_time)
 
     # # the library class will be here
     # class library:
