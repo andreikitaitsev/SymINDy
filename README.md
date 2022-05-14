@@ -14,6 +14,8 @@ Before pushing, remember to run
  pre-commit run --all-files
 ```
 
+Example command:
+
 ```commandline
 SymINDy propagate -s myspring -t 10
 ```
