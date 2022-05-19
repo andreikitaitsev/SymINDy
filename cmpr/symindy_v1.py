@@ -1,5 +1,6 @@
 import operator
 import random
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy as ps
@@ -10,7 +11,7 @@ import networkx as nx
 from symindy.library import library
 #from scoop import futures
 from sklearn.metrics import *
-import warnings
+
 
 class SymINDy_class(object):
     def __init__(
@@ -23,12 +24,12 @@ class SymINDy_class(object):
         library_name="generalized",
         is_time_dependent=False,
         seed=0,
-        score_metrics=r2_score,
+        score_metrics=None,
         score_metrics_kwargs=None,
         nc=0,
         n_individuals=300,
         sindy_kwargs=None,
-        verbose=False,
+        verbose=True,
         sparsity = "n_nodes"
     ):
         """
@@ -158,7 +159,6 @@ class SymINDy_class(object):
     def evalSymbReg(
         individual,
         ntrees,
-        max_depth,
         toolbox,
         x_train,
         x_dot_train,
@@ -167,8 +167,7 @@ class SymINDy_class(object):
         score_metrics=None,
         score_metrics_kwargs=None,
         flag_solution=False,
-        tr_te_ratio=None,
-        sparsity="n_zero_nodes"
+        tr_te_ratio=None
     ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
@@ -186,7 +185,6 @@ class SymINDy_class(object):
                 sindy_kwargs - dictionary with kwargs for SINDY. Default=None, no kwargs
                 tr_te_ratio -  float, ratio of train vs test split of the training data when fitting pysindy model.
                     If None, no train test split. If not none, no train test split is doen. Default = 0.8
-                sparsity - str, sparsity penalty for the optimization problem. Default - n_zero_nodes
         Outputs:
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
@@ -256,21 +254,19 @@ class SymINDy_class(object):
             model = fit_sindy_model(model, x_train, x_dot_train, time_rec_obs)
             model, fitness = score_sindy_model(model, x_train, time_rec_obs, x_dot_train,
                 score_metrics, score_metrics_kwargs)
-
-        # Sparsity penalty - coerce the model to keep nnodes as small as possible
-        if sparsity=="n_zero_nodes":
-            #n_samples, nterms = model.coefficients().shape # terms - subindivuduals and their interaction: len(individual)*n_samples
-            ind_coefs_list = np.split(model.coefficients().T.reshape(-1), ntrees)
-            n_nodes=0
-            for i in range(ntrees):
-                # if zero subindividual
-                if np.all(ind_coefs_list[i]==0): 
-                    continue
-                n_nodes += len(individual[i])
-            # len(individual)* # 2 max n inputs among dict funcs, (1+2) - max depath
-            max_nnodes = 2**(1+max_depth)*ntrees 
-            # normalize n_nodes by max n_nodes (self.max_depth)
-            fitness -= n_nodes/max_nnodes
+        # TODO add sparsity parameter to the fitness
+        def _find_zero_subind(data, ax=1):
+            return np.where(np.all(model.coefficients()==0, axis=0))[0]
+        zero_ind = _find_zero_subind(model.coefficients())
+        n_nodes=0
+        for i in range(model.coefficients().shape[1]):
+            if np.isin(i,zero_ind):
+                continue
+            n_nodes += len(individual[i])
+        # normalize n_nodes by max n_nodes self.max_depth
+        max_nnodes = 2**(1+2)*len(individual) # 2 max n inputs among dict funcs, (1+2) - max depath
+        fitness -= n_nodes/max_nnodes
+        #TODO Add the functionality of using the difference of the numerical integrals using from scipy.integrate import simps
         if not flag_solution:
             return [fitness, ]
         else:
@@ -288,7 +284,7 @@ class SymINDy_class(object):
         ntrees,
         stats=None,
         halloffame=None,
-        verbose=False,
+        verbose=__debug__,
     ):
         """
         Takes in a population and evolves it in place using the varAnd() method.
@@ -368,8 +364,6 @@ class SymINDy_class(object):
         fitnesses = toolbox_local.map(toolbox_local.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
-            if verbose:
-                print('Fitness: '+str(fit))
 
         if halloffame is not None:
             halloffame.update(population)
@@ -431,7 +425,6 @@ class SymINDy_class(object):
             "evaluate",
             self.evalSymbReg,
             ntrees=self.ntrees,
-            max_depth = self.max_depth,
             toolbox=toolbox,
             x_train=x_train,
             x_dot_train=x_dot_train,
@@ -448,7 +441,6 @@ class SymINDy_class(object):
             "retrieve_model",
             self.evalSymbReg,
             ntrees=self.ntrees,
-            max_depth = self.max_depth,
             toolbox=toolbox,
             x_train=x_train,
             x_dot_train=x_dot_train,
@@ -466,19 +458,17 @@ class SymINDy_class(object):
         hof_ = tools.HallOfFame(1)
 
         # Run the evolution
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pop, log, hof = self.my_eaSimple(
-                pop,
-                toolbox,
-                cxpb=self.cxpb,
-                mutpb=self.mutpb,
-                ngen=self.ngen,
-                ntrees=self.ntrees,
-                stats=mstats,
-                halloffame=hof_,
-                verbose=self.verbose,
-            )
+        pop, log, hof = self.my_eaSimple(
+            pop,
+            toolbox,
+            cxpb=self.cxpb,
+            mutpb=self.mutpb,
+            ngen=self.ngen,
+            ntrees=self.ntrees,
+            stats=mstats,
+            halloffame=hof_,
+            verbose=self.verbose,
+        )
 
         # Train SINDy model with the best individual
         final_model = toolbox.retrieve_model(hof[0])

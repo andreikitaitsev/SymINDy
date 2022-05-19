@@ -1,5 +1,6 @@
 import operator
 import random
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy as ps
@@ -23,7 +24,7 @@ class SymINDy_class(object):
         library_name="generalized",
         is_time_dependent=False,
         seed=0,
-        score_metrics=r2_score,
+        score_metrics=None,
         score_metrics_kwargs=None,
         nc=0,
         n_individuals=300,
@@ -158,7 +159,6 @@ class SymINDy_class(object):
     def evalSymbReg(
         individual,
         ntrees,
-        max_depth,
         toolbox,
         x_train,
         x_dot_train,
@@ -256,20 +256,18 @@ class SymINDy_class(object):
             model = fit_sindy_model(model, x_train, x_dot_train, time_rec_obs)
             model, fitness = score_sindy_model(model, x_train, time_rec_obs, x_dot_train,
                 score_metrics, score_metrics_kwargs)
-
-        # Sparsity penalty - coerce the model to keep nnodes as small as possible
+        
+        # Sparsity penalty 
         if sparsity=="n_zero_nodes":
-            #n_samples, nterms = model.coefficients().shape # terms - subindivuduals and their interaction: len(individual)*n_samples
-            ind_coefs_list = np.split(model.coefficients().T.reshape(-1), ntrees)
+            _find_zero_subind = lambda model: np.where(np.all(model.coefficients()==0, axis=0))[0]
+            zero_ind = _find_zero_subind(model)
             n_nodes=0
-            for i in range(ntrees):
-                # if zero subindividual
-                if np.all(ind_coefs_list[i]==0): 
+            for i in range(model.coefficients().shape[1]//model.coefficients().shape[0]):
+                if np.isin(i, zero_ind):
                     continue
                 n_nodes += len(individual[i])
-            # len(individual)* # 2 max n inputs among dict funcs, (1+2) - max depath
-            max_nnodes = 2**(1+max_depth)*ntrees 
             # normalize n_nodes by max n_nodes (self.max_depth)
+            max_nnodes = 2**(1+2)*len(individual) # 2 max n inputs among dict funcs, (1+2) - max depath
             fitness -= n_nodes/max_nnodes
         if not flag_solution:
             return [fitness, ]
@@ -288,7 +286,7 @@ class SymINDy_class(object):
         ntrees,
         stats=None,
         halloffame=None,
-        verbose=False,
+        verbose=__debug__,
     ):
         """
         Takes in a population and evolves it in place using the varAnd() method.
@@ -368,8 +366,6 @@ class SymINDy_class(object):
         fitnesses = toolbox_local.map(toolbox_local.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
-            if verbose:
-                print('Fitness: '+str(fit))
 
         if halloffame is not None:
             halloffame.update(population)
@@ -431,7 +427,6 @@ class SymINDy_class(object):
             "evaluate",
             self.evalSymbReg,
             ntrees=self.ntrees,
-            max_depth = self.max_depth,
             toolbox=toolbox,
             x_train=x_train,
             x_dot_train=x_dot_train,
@@ -448,7 +443,6 @@ class SymINDy_class(object):
             "retrieve_model",
             self.evalSymbReg,
             ntrees=self.ntrees,
-            max_depth = self.max_depth,
             toolbox=toolbox,
             x_train=x_train,
             x_dot_train=x_dot_train,

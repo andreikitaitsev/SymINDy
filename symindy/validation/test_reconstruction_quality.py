@@ -4,21 +4,19 @@ from symindy.systems.dynamical_system import DynamicalSystem
 from symindy.symindy import SymINDy_class
 import pysindy.utils.odes as odes
 import numpy as np
-import seaborn as sea
-import pandas as pd
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
-from symindy.validation.utils import plot_orig_pred
+from symindy.validation.utils import plot2d, plot3d
 from symindy.systems import non_linear_systems as nl
 
-system = nl.myspring
+system = nl.myspring# odes.linear_3D
 figtitle = 'myspring'
 
 ### linear ODEs
 time_start=-10
 time_end=10
-nsamples=100
-time_span=np.linspace(time_start, time_end, nsamples)
+nsamples=1000
+time_span=np.linspace(time_start, time_end, nsamples, endpoint=False)
 x0=[1,-2.4]
 
 dynsys=DynamicalSystem(system, x0=x0)
@@ -31,7 +29,7 @@ xdot_tr, xdot_te = split(xdot, ratio)
 time_tr, time_te = split(time_span, ratio)
 
 # istantiate symINDy
-symindy = SymINDy_class()
+symindy = SymINDy_class(verbose=True)
 
 # fit symINDy on the training data
 symindy.fit(x_tr, xdot_tr, time_tr)
@@ -47,7 +45,7 @@ data = {'x_te': x_te, 'x_te_pred':x_te_pred, 'xdot_te': xdot_te, 'xdot_te_pred':
     'x_metric': {"name": "r2", "value": corr_x}, 'xdot_metric': {"name": "r2","value": corr_xdot}}
 
 # plot original and predicted data
-fig, ax = plot_orig_pred(data, figtitle=figtitle)
+fig, ax = plot2d(data, figtitle=figtitle)
 #TODO some loops through ~ 10 systems and a figure showing the original and predicted systems.
 # Consider seaborn.
 plt.show()
