@@ -11,7 +11,7 @@ import networkx as nx
 from symindy.library import library
 #from scoop import futures
 from sklearn.metrics import *
-
+import warnings
 
 class SymINDy_class(object):
     def __init__(
@@ -29,7 +29,7 @@ class SymINDy_class(object):
         nc=0,
         n_individuals=300,
         sindy_kwargs=None,
-        verbose=True,
+        verbose=False,
         sparsity = "n_nodes"
     ):
         """
@@ -167,7 +167,8 @@ class SymINDy_class(object):
         score_metrics=None,
         score_metrics_kwargs=None,
         flag_solution=False,
-        tr_te_ratio=None
+        tr_te_ratio=None,
+        sparsity="n_zero_nodes"
     ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
@@ -185,6 +186,7 @@ class SymINDy_class(object):
                 sindy_kwargs - dictionary with kwargs for SINDY. Default=None, no kwargs
                 tr_te_ratio -  float, ratio of train vs test split of the training data when fitting pysindy model.
                     If None, no train test split. If not none, no train test split is doen. Default = 0.8
+                sparsity - str, sparsity penalty for the optimization problem. Default - n_zero_nodes
         Outputs:
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
@@ -254,19 +256,19 @@ class SymINDy_class(object):
             model = fit_sindy_model(model, x_train, x_dot_train, time_rec_obs)
             model, fitness = score_sindy_model(model, x_train, time_rec_obs, x_dot_train,
                 score_metrics, score_metrics_kwargs)
-        # TODO add sparsity parameter to the fitness
-        def _find_zero_subind(data, ax=1):
-            return np.where(np.all(model.coefficients()==0, axis=0))[0]
-        zero_ind = _find_zero_subind(model.coefficients())
-        n_nodes=0
-        for i in range(model.coefficients().shape[1]):
-            if np.isin(i,zero_ind):
-                continue
-            n_nodes += len(individual[i])
-        # normalize n_nodes by max n_nodes self.max_depth
-        max_nnodes = 2**(1+2)*len(individual) # 2 max n inputs among dict funcs, (1+2) - max depath
-        fitness -= n_nodes/max_nnodes
-        #TODO Add the functionality of using the difference of the numerical integrals using from scipy.integrate import simps
+        
+        # Sparsity penalty 
+        if sparsity=="n_zero_nodes":
+            _find_zero_subind = lambda model: np.where(np.all(model.coefficients()==0, axis=0))[0]
+            zero_ind = _find_zero_subind(model)
+            n_nodes=0
+            for i in range(model.coefficients().shape[1]//model.coefficients().shape[0]):
+                if np.isin(i, zero_ind):
+                    continue
+                n_nodes += len(individual[i])
+            # normalize n_nodes by max n_nodes (self.max_depth)
+            max_nnodes = 2**(1+2)*len(individual) # 2 max n inputs among dict funcs, (1+2) - max depath
+            fitness -= n_nodes/max_nnodes
         if not flag_solution:
             return [fitness, ]
         else:
@@ -458,17 +460,19 @@ class SymINDy_class(object):
         hof_ = tools.HallOfFame(1)
 
         # Run the evolution
-        pop, log, hof = self.my_eaSimple(
-            pop,
-            toolbox,
-            cxpb=self.cxpb,
-            mutpb=self.mutpb,
-            ngen=self.ngen,
-            ntrees=self.ntrees,
-            stats=mstats,
-            halloffame=hof_,
-            verbose=self.verbose,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            pop, log, hof = self.my_eaSimple(
+                pop,
+                toolbox,
+                cxpb=self.cxpb,
+                mutpb=self.mutpb,
+                ngen=self.ngen,
+                ntrees=self.ntrees,
+                stats=mstats,
+                halloffame=hof_,
+                verbose=self.verbose,
+            )
 
         # Train SINDy model with the best individual
         final_model = toolbox.retrieve_model(hof[0])
