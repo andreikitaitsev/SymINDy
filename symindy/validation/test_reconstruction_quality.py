@@ -13,11 +13,11 @@ system = nl.myspring# change to different systems e.g. odes.linear_3D
 figtitle = 'myspring'
 
 ### linear ODEs
-time_start=-10
-time_end=10
+time_start=0
+time_end=100
 nsamples=1000
 time_span=np.linspace(time_start, time_end, nsamples, endpoint=False)
-x0=[1,-2.4] # change depending on the dimensionality of the system
+x0=[0.4, 1.6] # change depending on the dimensionality of the system
 
 dynsys=DynamicalSystem(system, x0=x0)
 x, xdot = dynsys.simulate(time_start, time_end, nsamples)

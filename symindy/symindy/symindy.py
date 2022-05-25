@@ -440,7 +440,8 @@ class SymINDy:
             score_metrics=self.score_metrics,
             score_metrics_kwargs=self.score_metrics_kwargs,
             flag_solution=False,
-            tr_te_ratio=0.8
+            tr_te_ratio=0.8,
+            sparsity=self.sparsity
         )
 
         # Register function to train SINDy model and retrieve it
@@ -457,7 +458,8 @@ class SymINDy:
             score_metrics=self.score_metrics,
             score_metrics_kwargs=self.score_metrics_kwargs,
             flag_solution=True,
-            tr_te_ratio=0.8
+            tr_te_ratio=0.8,
+            sparsity=self.sparsity
         )
 
         mstats = self.init_stats()
