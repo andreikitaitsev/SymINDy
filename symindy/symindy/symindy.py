@@ -100,9 +100,9 @@ class SymINDy:
             '''
             argnames = {}
             for dim in range(dimensions):
-               argnames["ARG{}".format(dim)]="y{}".format(dim)
+               argnames["ARG{}".format(dim)]="x{}".format(dim)
             for i in range(nc):
-                argnames["ARG{}".format(i+dimensions)] = "p{}".format(i)
+                argnames["ARG{}".format(i+dimensions)] = "x{}".format(i)
             if is_time_dependent:
                 argnames["ARG{}".format(len(argnames))]='t'
             pset.renameArguments(**argnames)
@@ -207,11 +207,9 @@ class SymINDy:
             model = ps.SINDy(feature_library=library, **sindy_kwargs)
             return model
 
-        def fit_sindy_model(model, x_train, x_dot_train=None, time_rec_obs=None, fitkwargs=None):
+        def fit_sindy_model(model, x_train, x_dot_train=None, time_rec_obs=None, fitkwargs={"quiet": True}):
             '''Fit pysindy model.
             '''
-            if fitkwargs is None:
-                fitkwargs = {}
             model.fit(x_train, t=time_rec_obs, x_dot=x_dot_train, **fitkwargs)
             return model
 
@@ -376,7 +374,7 @@ class SymINDy:
         record = stats.compile(population) if stats else {}
         logbook.record(gen=0, nevals=len(invalid_ind), **record)
         if verbose:
-            print(logbook.stream)
+            logbook.stream
 
         # Begin the generational process
         for gen in range(1, ngen + 1):
@@ -421,6 +419,8 @@ class SymINDy:
 
     def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
         """Train SymINDy model on the train data."""
+        import warnings
+        warnings.filterwarnings('ignore', '.*Sparsity parameter is too big.*')
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
@@ -468,19 +468,17 @@ class SymINDy:
         hof_ = tools.HallOfFame(1)
 
         # Run the evolution
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pop, log, hof = self.my_eaSimple(
-                pop,
-                toolbox,
-                cxpb=self.cxpb,
-                mutpb=self.mutpb,
-                ngen=self.ngen,
-                ntrees=self.ntrees,
-                stats=mstats,
-                halloffame=hof_,
-                verbose=self.verbose,
-            )
+        pop, log, hof = self.my_eaSimple(
+            pop,
+            toolbox,
+            cxpb=self.cxpb,
+            mutpb=self.mutpb,
+            ngen=self.ngen,
+            ntrees=self.ntrees,
+            stats=mstats,
+            halloffame=hof_,
+            verbose=self.verbose,
+        )
 
         # Train SINDy model with the best individual
         final_model = toolbox.retrieve_model(hof[0])
@@ -498,6 +496,14 @@ class SymINDy:
         self.log = log
         self.hof = hof # best individual that ever lived
         self.final_model = final_model
+        
+        # print estimated model
+        print('\n')
+        for i in range(self.ntrees):
+            print('Estimated library functions: f{0}: {1}'.format(str(i), hof[0][i]))
+        print('Estimated dynamical system: \n')
+        self.final_model.print()
+        print('\n')
 
     def predict(self, x0, time, simulate_kwargs=None, predict_kwargs=None):
         '''

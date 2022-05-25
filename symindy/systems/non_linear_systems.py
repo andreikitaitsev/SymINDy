@@ -1,7 +1,7 @@
 '''Noin-linear dynamical systems base class.'''
 import numpy as np
 
-def myspring(t, x, k=4.518, c=0.372, F0=9.123):
+def myspring(t, x, k=-4.518, c=0.372, F0=9.123):
     '''
     Example nonlinear dynamical system.
     xdot = v

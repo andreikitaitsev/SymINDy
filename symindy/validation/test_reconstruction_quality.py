@@ -29,7 +29,7 @@ xdot_tr, xdot_te = split(xdot, ratio)
 time_tr, time_te = split(time_span, ratio)
 
 # istantiate symINDy
-symindy = SymINDy(verbose=True, sparsity=None)
+symindy = SymINDy(verbose=False, sparsity="n_zero_nodes")
 
 # fit symINDy on the training data
 symindy.fit(x_tr, xdot_tr, time_tr)
