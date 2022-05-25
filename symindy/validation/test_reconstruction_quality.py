@@ -1,7 +1,7 @@
 '''Test the quality of the reconstructuion and prediction of different dynamical systems.'''
 from symindy.systems.non_linear_systems import lorenz
 from symindy.systems.dynamical_system import DynamicalSystem
-from symindy.symindy import SymINDy_class
+from symindy.symindy.symindy import SymINDy_class
 import pysindy.utils.odes as odes
 import numpy as np
 from sklearn.metrics import r2_score
@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from symindy.validation.utils import plot2d, plot3d
 from symindy.systems import non_linear_systems as nl
 
-system = nl.myspring# odes.linear_3D
+system = nl.myspring# change to different systems e.g. odes.linear_3D
 figtitle = 'myspring'
 
 ### linear ODEs
@@ -17,7 +17,7 @@ time_start=-10
 time_end=10
 nsamples=1000
 time_span=np.linspace(time_start, time_end, nsamples, endpoint=False)
-x0=[1,-2.4]
+x0=[1,-2.4] # change depending on the dimensionality of the system
 
 dynsys=DynamicalSystem(system, x0=x0)
 x, xdot = dynsys.simulate(time_start, time_end, nsamples)
@@ -29,7 +29,7 @@ xdot_tr, xdot_te = split(xdot, ratio)
 time_tr, time_te = split(time_span, ratio)
 
 # istantiate symINDy
-symindy = SymINDy_class(verbose=True)
+symindy = SymINDy_class(verbose=True, sparsity=None)
 
 # fit symINDy on the training data
 symindy.fit(x_tr, xdot_tr, time_tr)

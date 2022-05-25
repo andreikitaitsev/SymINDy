@@ -1,4 +1,4 @@
-from scipy.integrate import solve_ivp
+'''Noin-linear dynamical systems base class.'''
 import numpy as np
 
 def myspring(t, x, k=4.518, c=0.372, F0=9.123):

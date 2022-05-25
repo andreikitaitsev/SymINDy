@@ -1,3 +1,4 @@
+# TODO UPDATE
 FROM ubuntu:20.04
 RUN apt update
 # optional 
@@ -6,7 +7,7 @@ RUN apt update
 RUN apt install python3.8 -y
 RUN apt install python3-pip -y
 # igraphviz requres separate installation
-CMD ["yes n | apt install graphviz"] 
+RUN apt install graphviz | yes n 
 
 COPY requirements.txt .
 RUN pip3 install --upgrade pip
