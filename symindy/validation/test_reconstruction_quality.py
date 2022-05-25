@@ -1,7 +1,7 @@
 '''Test the quality of the reconstructuion and prediction of different dynamical systems.'''
 from symindy.systems.non_linear_systems import lorenz
 from symindy.systems.dynamical_system import DynamicalSystem
-from symindy.symindy.symindy import SymINDy_class
+from symindy.symindy.symindy import SymINDy
 import pysindy.utils.odes as odes
 import numpy as np
 from sklearn.metrics import r2_score
@@ -29,7 +29,7 @@ xdot_tr, xdot_te = split(xdot, ratio)
 time_tr, time_te = split(time_span, ratio)
 
 # istantiate symINDy
-symindy = SymINDy_class(verbose=True, sparsity=None)
+symindy = SymINDy(verbose=True, sparsity=None)
 
 # fit symINDy on the training data
 symindy.fit(x_tr, xdot_tr, time_tr)
