@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 
 '''Plotting functions and utils.'''
-def plot2d(data, fig=None, ax=None, figtitle=None, legend=None, fontsize=16):
+def plot2d(data, fig=None, ax=None, figtitle=None, fontsize=16):
     if fig is None and ax is None:
         fig, axs = plt.subplots(2)
     # plot x

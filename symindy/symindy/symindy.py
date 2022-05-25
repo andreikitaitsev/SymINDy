@@ -5,12 +5,10 @@ import numpy as np
 import pysindy as ps
 from deap import base, creator, gp, tools
 from sklearn.metrics import r2_score
-from scipy.integrate import solve_ivp
 import networkx as nx
 from symindy.symindy.library import library
-#from scoop import futures
+import multiprocessing
 from sklearn.metrics import *
-import warnings
 
 class SymINDy:
     def __init__(
@@ -131,7 +129,6 @@ class SymINDy:
             toolbox.register("select", tools.selTournament, tournsize=2)
             toolbox.register("mate", _random_mating_operator)
             toolbox.register("mutate", _random_mutation_operator)
-            toolbox.register("map", map)#futures.map)
             history = tools.History()
             toolbox.decorate("mate", history.decorator)
             toolbox.decorate("mutate", history.decorator)
@@ -419,8 +416,7 @@ class SymINDy:
 
     def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
         """Train SymINDy model on the train data."""
-        import warnings
-        warnings.filterwarnings('ignore', '.*Sparsity parameter is too big.*')
+
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
             ntrees=self.ntrees, nc=self.nc, dimensions=self.dims
