@@ -68,3 +68,15 @@ def plot3d(data, fig=None, ax=None, figtitle=None, legend=None, fontsize=16):
         fig.suptitle(figtitle, fontsize=fontsize+4)
     fig.tight_layout()
     return fig, axs
+
+def split(data, ratio):
+    '''Split the data into the train and test sets 
+    along the 0th axis.
+    Inputs:
+        data - np array
+        ratio - float
+    Outputs:
+        data_tr, data_te - splitted data'''
+    data_train = data[: int((1-ratio) * len(data))]
+    data_test = data[int((1-ratio) * len(data)) :]
+    return data_train, data_test
