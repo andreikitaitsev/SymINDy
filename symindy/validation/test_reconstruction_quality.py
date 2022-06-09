@@ -35,7 +35,7 @@ symindy = SymINDy(verbose=False, sparsity="n_zero_nodes")
 symindy.fit(x_tr, xdot_tr, time_tr)
 
 # predict
-x_te_pred, xdot_te_pred = symindy.predict(x0, time_te)
+x_te_pred, xdot_te_pred = symindy.predict(x_te[0], time_te)
 
 # assess predictions via correlation
 corr_x = r2_score(x_te, x_te_pred)
