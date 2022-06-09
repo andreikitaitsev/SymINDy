@@ -168,9 +168,6 @@ dmypy.json
 # data folder
 data/
 
-# pwds
-*.yaml
-
 # tmp folders add files
 
 */tmp
