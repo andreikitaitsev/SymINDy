@@ -9,18 +9,17 @@ import matplotlib.pyplot as plt
 from symindy.validation.utils import plot2d, plot3d
 from symindy.systems import non_linear_systems as nl
 
-system = nl.lorenz#nl.myspring# change to different systems e.g. odes.linear_3D
+system = nl.myspring # change to different systems e.g. odes.linear_3D  #nl.lorenz #
 
-
-
+1/0
 ### linear ODEs
 time_start=0
 time_end=100
-nsamples=1000
+nsamples=10000
 time_span=np.linspace(time_start, time_end, nsamples, endpoint=False)
-x0=[0.4, 1.6, 2.2] # change depending on the dimensionality of the system
+x0=[-8, 8, 27] # change depending on the dimensionality of the system
 
-dynsys=DynamicalSystem(system, x0=x0)
+dynsys = DynamicalSystem(system, x0=x0)
 x, xdot = dynsys.simulate(time_start, time_end, nsamples)
 
 split = lambda x, ratio: (x[:int(ratio*len(x))], x[int(ratio*len(x)):]) if x is not None else (None, None)

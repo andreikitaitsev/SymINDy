@@ -13,8 +13,8 @@ system = nl.myspring  # choose different systems e.g. odes.linear_3D
 
 ### linear ODEs
 time_start = 0
-time_end = 60
-nsamples = 100
+time_end = 10
+nsamples = 60
 time_span = np.linspace(time_start, time_end, nsamples, endpoint=False)
 x0 = [0.4, 1.6]  # change depending on the dimensionality of the system
 

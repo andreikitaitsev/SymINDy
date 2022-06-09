@@ -45,9 +45,9 @@ See also work by Facebook AI.
 
 Why this and not simply SINDy? Because here we can get functions like the norm, the cross product, the scalar product..functions acting on vectors. In this way we can for example reconstruct the equations of motion of a two-body problem, not sure how straightforward it is for SINDy to do it.
 
-Can we also do something with divergence? Gradient? Do we need measurements in space as well to compute the partials with finite difference? In this way we can have a bigger library.
+Can we also do something with divergence? Gradient? Do we need measurements in space as well to compute the partials with finite difference? In this way, we can have a bigger library.
 
-It makes sense to add a flag for the user stating whether the system is autonomous or non autonomus: if it is not,
+It makes sense to add a flag for the user stating whether the system is autonomous or non-autonomus: if it is not,
 time is added as an additional state variable, and so we are then able to obtain \ddot{x} = - k x + sin (sin(\omega t)), for example.
 
 ## TODO
