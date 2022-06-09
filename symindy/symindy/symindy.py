@@ -1,14 +1,17 @@
+import multiprocessing
 import operator
 import random
+
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pysindy as ps
 from deap import base, creator, gp, tools
-from sklearn.metrics import r2_score
-import networkx as nx
-from symindy.symindy.library import library
-import multiprocessing
 from sklearn.metrics import *
+from sklearn.metrics import r2_score
+
+from symindy.symindy.library import library
+
 
 class SymINDy:
     def __init__(
@@ -60,7 +63,7 @@ class SymINDy:
         """
         Inputs:
                 ntrees -int, number of trees defining an individual. Defualt=5.
-                nc -int, number of nonlinear parameters (symbolic constants 
+                nc -int, number of nonlinear parameters (symbolic constants
                     associated to the individual). Defualt=0.
                 dimensions - int, read from txt files as n columns
                 is_time_dependent - flag, is the system is time-dependent
@@ -86,7 +89,7 @@ class SymINDy:
             '''Rename arguments in primitive set.
             Inputs:
                 pset - primitive set
-                nc -int, number of nonlinear parameters (symbolic constants 
+                nc -int, number of nonlinear parameters (symbolic constants
                     associated to the individual).
                 dimensions - int, read from txt files as n columns
                 is_time_dependent - flag, is the system is time-dependent
@@ -114,10 +117,11 @@ class SymINDy:
             Outputs:
                 toolbox, creator, history
             '''
-            from deap import creator #TODO figure out why the globally imported creator is not seen inside this function.
-            creator.create("FitnessMax", base.Fitness, weights=(1.0,)) 
+            from deap import \
+                creator  # TODO figure out why the globally imported creator is not seen inside this function.
+            creator.create("FitnessMax", base.Fitness, weights=(1.0,))
             # subindividual is a primitive tree which is populated from pset
-            creator.create("Subindividual", gp.PrimitiveTree)  
+            creator.create("Subindividual", gp.PrimitiveTree)
             creator.create("Individual", list, fitness=creator.FitnessMax)
             toolbox = base.Toolbox()
             toolbox.register("expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=0, max_=max_depth)
@@ -144,9 +148,9 @@ class SymINDy:
             library_name=self.library_name
         )
         pset = lib()
-        
+
         pset = _rename_args(pset, nc, dimensions, self.is_time_dependent)
-        
+
         toolbox, creator, history = _create_toolbox(pset, ntrees, max_depth=self.max_depth)
         return toolbox, creator, pset, history
 
@@ -233,14 +237,14 @@ class SymINDy:
             score_metrics = r2_score
         if score_metrics_kwargs is None:
             score_metrics_kwargs = {}
-        
+
         validate_input(x_train)
 
         model = create_sindy_model(individual, toolbox, sindy_kwargs)
 
         # if train test split, fit the model on train set and score on test set
         split = lambda x, ratio: (x[:int(ratio*len(x))], x[int(ratio*len(x)):]) if x is not None else (None, None)
-        
+
         if tr_te_ratio is not None:
             x_train_tr, x_train_te = split(x_train, tr_te_ratio)
             x_dot_train_tr, x_dot_train_te = split(x_dot_train, tr_te_ratio)
@@ -259,14 +263,14 @@ class SymINDy:
         n_nodes=0
         for i in range(ntrees):
             # if zero subindividual
-            if np.all(ind_coefs_list[i]==0): 
+            if np.all(ind_coefs_list[i]==0):
                 continue
             n_nodes += len(individual[i])
         # len(individual)* # 2 max n inputs among dict funcs, (1+2) - max depath
-        max_nnodes = 2**(1+max_depth)*ntrees 
+        max_nnodes = 2**(1+max_depth)*ntrees
         # normalize n_nodes by max n_nodes (self.max_depth)
         fitness -= sparsity_coef* (n_nodes/max_nnodes)
-        
+
         if not flag_solution:
             return [fitness, ]
         else:
@@ -493,7 +497,7 @@ class SymINDy:
         self.log = log
         self.hof = hof # best individual that ever lived
         self.final_model = final_model
-        
+
         # print estimated model
         print('\n')
         for i in range(self.ntrees):
@@ -508,7 +512,7 @@ class SymINDy:
         Note, that if you use the model with train-test sets, x0 shall be the first time
         observation of the test set.
         Inputs:
-            x0 - initial condition for the prediction of xtest. 
+            x0 - initial condition for the prediction of xtest.
             time - int or array, time corresponding to predictions
             simulate_kwargs - dict of args for pysindy.simulate. Default=None, no kwargs
             predict_kwargs - dict of args for pysindy.predict. Default=None, no kwargs
@@ -525,7 +529,7 @@ class SymINDy:
         # predict xdot from x_te_pred
         xdot_te_pred = self.final_model.predict(x_te_pred)
         return x_te_pred, xdot_te_pred
-    
+
     @staticmethod
     def score(x, x_pred, xdot, xdot_pred, metric=None, metric_kwargs=None):
         '''
@@ -533,7 +537,7 @@ class SymINDy:
         Inputs:
             x
             x_pred
-            xdot 
+            xdot
             xdot_pred
             metric - metric to use
             kwargs - kwrargs for the metric
@@ -555,7 +559,7 @@ class SymINDy:
     def plot_trees(self, show=False):
         '''Plot tree of the best individuals (hof[0]).'''
         expr=self.hof[0]
-        fig, axs = plt.subplots(int(np.floor(self.ntrees/2)), 
+        fig, axs = plt.subplots(int(np.floor(self.ntrees/2)),
             int(np.ceil(self.ntrees/2)), figsize=(16,9))
         for i, ax in zip(range(self.ntrees), np.ravel(axs)):
             nodes, edges, labels = gp.graph(expr[i])

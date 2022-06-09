@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 
-
 '''Plotting functions and utils.'''
 def plot2d(data, fig=None, ax=None, figtitle=None, fontsize=16):
     if fig is None and ax is None:
@@ -95,7 +94,7 @@ def plot3d_(data, fig=None, ax=None, figtitle=None, legend=None, fontsize=16):
     return fig, axs
 
 def split(data, ratio):
-    '''Split the data into the train and test sets 
+    '''Split the data into the train and test sets
     along the 0th axis.
     Inputs:
         data - np array

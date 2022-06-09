@@ -7,6 +7,7 @@ pip install -r requirements/dev.txt
 ```
 
 ## Commands
+
 Dear developer, before pushing, remember to run
 
 ```commandline

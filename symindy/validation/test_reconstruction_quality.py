@@ -1,13 +1,14 @@
 '''Test the quality of the reconstructuion and prediction of different dynamical systems.'''
-from symindy.systems.non_linear_systems import lorenz
-from symindy.systems.dynamical_system import DynamicalSystem
-from symindy.symindy.symindy import SymINDy
-import pysindy.utils.odes as odes
-import numpy as np
-from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
-from symindy.validation.utils import plot2d, plot3d
+import numpy as np
+import pysindy.utils.odes as odes
+from sklearn.metrics import r2_score
+
+from symindy.symindy.symindy import SymINDy
 from symindy.systems import non_linear_systems as nl
+from symindy.systems.dynamical_system import DynamicalSystem
+from symindy.systems.non_linear_systems import lorenz
+from symindy.validation.utils import plot2d, plot3d
 
 system = nl.lorenz # change to different systems e.g. odes.linear_3D  #nl.lorenz #
 

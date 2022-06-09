@@ -16,7 +16,7 @@ class library:
             size_input += 1
         intypes = [float for i in range(size_input)]
         # 1)name, 2)type of each input, 3)type of the output
-        pset = gp.PrimitiveSetTyped("MAIN", intypes, float)  
+        pset = gp.PrimitiveSetTyped("MAIN", intypes, float)
         self.pset = pset
 
     def polynomial_library(self):

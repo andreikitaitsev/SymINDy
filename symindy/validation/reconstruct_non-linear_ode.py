@@ -1,12 +1,13 @@
 """Test the quality of the reconstructuion and prediction of different dynamical systems."""
-from symindy.systems.non_linear_systems import lorenz
-from symindy.systems.dynamical_system import DynamicalSystem
-from symindy.symindy.symindy import SymINDy
+import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import r2_score
-import matplotlib.pyplot as plt
-from symindy.validation.utils import plot2d, plot3d, split
+
+from symindy.symindy.symindy import SymINDy
 from symindy.systems import non_linear_systems as nl
+from symindy.systems.dynamical_system import DynamicalSystem
+from symindy.systems.non_linear_systems import lorenz
+from symindy.validation.utils import plot2d, plot3d, split
 
 ### Non-linear ODEs
 
@@ -57,7 +58,7 @@ from symindy.systems import non_linear_systems as nl
 #
 #
 #
-### 2. myspring 
+### 2. myspring
 #    xdot = v
 #    vdot = - k x - v c + F sin(x**2)
 # create dynamical system and simulate x, xdot

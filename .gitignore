@@ -149,7 +149,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# data files 
+# data files
 *.xlsx
 *.RData
 *.csv
@@ -157,7 +157,7 @@ dmypy.json
 *.pdf
 *.json
 
-# RStudio Project file 
+# RStudio Project file
 *.Rproj
 .Rproj.user
 

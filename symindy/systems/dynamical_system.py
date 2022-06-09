@@ -1,7 +1,7 @@
-'''Dynamical system base class. 
+'''Dynamical system base class.
 It is convenient for the usage with pysindy.utils.odes functions.'''
-from scipy.integrate import solve_ivp
 import numpy as np
+from scipy.integrate import solve_ivp
 
 
 class DynamicalSystem:
@@ -14,7 +14,7 @@ class DynamicalSystem:
         self.func = func
         self.x0 = x0
         self.solve_ivp_kwargs = solve_ivp_kwargs
-    
+
     def simulate(self, t_start, t_end, n_samples):
         t_eval = np.linspace(t_start, t_end, n_samples, endpoint=False)
         x = solve_ivp(self.func, t_span=[t_start, t_end], y0=self.x0, t_eval=t_eval,

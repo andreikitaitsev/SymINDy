@@ -1,7 +1,8 @@
 import numpy as np
-from symindy.systems.non_linear_systems import lorenz
-from symindy.systems.dynamical_system import DynamicalSystem
+
 from symindy.symindy.symindy import SymINDy_class
+from symindy.systems.dynamical_system import DynamicalSystem
+from symindy.systems.non_linear_systems import lorenz
 
 time=(0,10)
 y0=[-8,8,27]
