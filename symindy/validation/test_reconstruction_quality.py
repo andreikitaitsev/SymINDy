@@ -9,9 +9,8 @@ import matplotlib.pyplot as plt
 from symindy.validation.utils import plot2d, plot3d
 from symindy.systems import non_linear_systems as nl
 
-system = nl.myspring # change to different systems e.g. odes.linear_3D  #nl.lorenz #
+system = nl.lorenz # change to different systems e.g. odes.linear_3D  #nl.lorenz #
 
-1/0
 ### linear ODEs
 time_start=0
 time_end=100
@@ -35,7 +34,7 @@ symindy = SymINDy(verbose=False, sparsity="n_zero_nodes")
 symindy.fit(x_tr, xdot_tr, time_tr)
 
 # predict
-x_te_pred, xdot_te_pred = symindy.predict(x0, time_te)
+x_te_pred, xdot_te_pred = symindy.predict(x_te[0], time_te)
 
 # assess predictions via correlation
 corr_x = r2_score(x_te, x_te_pred)
@@ -51,16 +50,16 @@ ax.plot(
     x_te[:, 1],
     x_te[:, 2], color="b"
 )
-ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
 
 # plot x test
-ax2 = fig.add_subplot(122, projection="3d")
-ax2.plot(
-    x_te_pred[:, 0],
-    x_te_pred[:, 1],
-    x_te_pred[:, 2], color='r'
+ax = fig.add_subplot(122, projection="3d")
+ax.plot(
+   x_te_pred[:, 0],
+   x_te_pred[:, 1],
+   x_te_pred[:, 2], color='r'
 )
-ax2.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
 
-fig.legend(['x te', 'x te pred'])
+ax.legend(["x te", "x te pred"])
+ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
+
 plt.show()

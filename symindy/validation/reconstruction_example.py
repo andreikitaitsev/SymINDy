@@ -9,20 +9,20 @@ import matplotlib.pyplot as plt
 from symindy.validation.utils import plot2d, plot3d
 from symindy.systems import non_linear_systems as nl
 
-system = nl.myspring  # choose different systems e.g. odes.linear_3D
-
+#system = nl.myspring  # choose different systems e.g. odes.linear_3D
+system = odes.linear_damped_SHO
 ### linear ODEs
 time_start = 0
-time_end = 10
-nsamples = 60
+time_end = 5
+nsamples = 2500
 time_span = np.linspace(time_start, time_end, nsamples, endpoint=False)
-x0 = [0.4, 1.6]  # change depending on the dimensionality of the system
+x0 = [2, 0]  # change depending on the dimensionality of the system
 
 dynsys = DynamicalSystem(system, x0=x0)
 x, xdot = dynsys.simulate(time_start, time_end, nsamples)
 
 split = (
-    lambda x, ratio: (x[: int(ratio * len(x))], x[int(ratio * len(x)) :])
+    lambda x, ratio: (x[: int((1-ratio) * len(x))], x[int((1-ratio) * len(x)) :])
     if x is not None
     else (None, None)
 )
@@ -32,13 +32,13 @@ xdot_tr, xdot_te = split(xdot, ratio)
 time_tr, time_te = split(time_span, ratio)
 
 # istantiate symINDy
-symindy = SymINDy(verbose=False, sparsity="n_zero_nodes")
+symindy = SymINDy(verbose=False, sparsity_coef=0.1, library_name="polynomial", ngen=20)
 
 # fit symINDy on the training data
 symindy.fit(x_tr, xdot_tr, time_tr)
 
 # predict
-x_te_pred, xdot_te_pred = symindy.predict(x0, time_te)
+x_te_pred, xdot_te_pred = symindy.predict(x_te[0], time_te)
 
 # assess predictions via correlation
 corr_x = r2_score(x_te, x_te_pred)
