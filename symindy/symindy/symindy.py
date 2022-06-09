@@ -27,7 +27,7 @@ class SymINDy:
         n_individuals=300,
         sindy_kwargs=None,
         verbose=False,
-        sparsity = "n_nodes"
+        sparsity_coef = 1
     ):
         """
         Inputs:
@@ -52,7 +52,7 @@ class SymINDy:
         self.nc = nc
         self.n_individuals = n_individuals
         self.sindy_kwargs = sindy_kwargs
-        self.sparsity = sparsity
+        self.sparsity_coef = sparsity_coef
         self.verbose = verbose
 
 
@@ -165,7 +165,7 @@ class SymINDy:
         score_metrics_kwargs=None,
         flag_solution=False,
         tr_te_ratio=None,
-        sparsity="n_zero_nodes"
+        sparsity_coef=1
     ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
@@ -183,7 +183,8 @@ class SymINDy:
                 sindy_kwargs - dictionary with kwargs for SINDY. Default=None, no kwargs
                 tr_te_ratio -  float, ratio of train vs test split of the training data when fitting pysindy model.
                     If None, no train test split. If not none, no train test split is doen. Default = 0.8
-                sparsity - str, sparsity penalty for the optimization problem. Default - n_zero_nodes
+                sparsity_coef - float, coefficient to multiply the sparsity penatly with (n_zero_nodes/max_n_nodes).
+                    Default=1
         Outputs:
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
@@ -253,19 +254,19 @@ class SymINDy:
                 score_metrics, score_metrics_kwargs)
 
         # Sparsity penalty - coerce the model to keep nnodes as small as possible
-        if sparsity=="n_zero_nodes":
-            #n_samples, nterms = model.coefficients().shape # terms - subindivuduals and their interaction: len(individual)*n_samples
-            ind_coefs_list = np.split(model.coefficients().T.reshape(-1), ntrees)
-            n_nodes=0
-            for i in range(ntrees):
-                # if zero subindividual
-                if np.all(ind_coefs_list[i]==0): 
-                    continue
-                n_nodes += len(individual[i])
-            # len(individual)* # 2 max n inputs among dict funcs, (1+2) - max depath
-            max_nnodes = 2**(1+max_depth)*ntrees 
-            # normalize n_nodes by max n_nodes (self.max_depth)
-            fitness -= n_nodes/max_nnodes
+        #n_samples, nterms = model.coefficients().shape # terms - subindivuduals and their interaction: len(individual)*n_samples
+        ind_coefs_list = np.split(model.coefficients().T.reshape(-1), ntrees)
+        n_nodes=0
+        for i in range(ntrees):
+            # if zero subindividual
+            if np.all(ind_coefs_list[i]==0): 
+                continue
+            n_nodes += len(individual[i])
+        # len(individual)* # 2 max n inputs among dict funcs, (1+2) - max depath
+        max_nnodes = 2**(1+max_depth)*ntrees 
+        # normalize n_nodes by max n_nodes (self.max_depth)
+        fitness -= sparsity_coef* (n_nodes/max_nnodes)
+        
         if not flag_solution:
             return [fitness, ]
         else:
@@ -437,7 +438,7 @@ class SymINDy:
             score_metrics_kwargs=self.score_metrics_kwargs,
             flag_solution=False,
             tr_te_ratio=0.8,
-            sparsity=self.sparsity
+            sparsity_coef=self.sparsity_coef
         )
 
         # Register function to train SINDy model and retrieve it
@@ -455,7 +456,7 @@ class SymINDy:
             score_metrics_kwargs=self.score_metrics_kwargs,
             flag_solution=True,
             tr_te_ratio=0.8,
-            sparsity=self.sparsity
+            sparsity_coef=self.sparsity_coef
         )
 
         mstats = self.init_stats()
