@@ -13,8 +13,13 @@ from symindy.systems import non_linear_systems as nl
 system = odes.linear_damped_SHO
 ### linear ODEs
 time_start = 0
+<<<<<<< HEAD
 time_end = 5
 nsamples = 2500
+=======
+time_end = 10
+nsamples = 200
+>>>>>>> 4ea2ccbce54d1e233b96c39ba7f625ba29765a32
 time_span = np.linspace(time_start, time_end, nsamples, endpoint=False)
 x0 = [2, 0]  # change depending on the dimensionality of the system
 
@@ -44,6 +49,7 @@ x_te_pred, xdot_te_pred = symindy.predict(x_te[0], time_te)
 corr_x = r2_score(x_te, x_te_pred)
 corr_xdot = r2_score(xdot_te, xdot_te_pred)
 # aggregate the data in a dict
+
 data = {
     "x_te": x_te,
     "x_te_pred": x_te_pred,
