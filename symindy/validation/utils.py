@@ -24,7 +24,7 @@ def plot2d(data, fig=None, ax=None, figtitle=None, fontsize=16):
     axs[1].set_xlabel('Time', fontsize=fontsize)
     axs[1].set_ylabel('Values', fontsize=fontsize)
     axs[1].set_title('xdot', fontsize=fontsize)
-    axs[0].legend(['xdot1', 'xdot2', 'xdot1_pred', 'xdot2_pred'])
+    axs[1].legend(['xdot1', 'xdot2', 'xdot1_pred', 'xdot2_pred'])
     axs[1].text(0.9, 0.9, '{}: {:.1f}'.format(data["xdot_metric"]["name"], data["xdot_metric"]["value"]))
 
     if figtitle is not None:

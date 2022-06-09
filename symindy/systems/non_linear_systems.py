@@ -9,7 +9,7 @@ def myspring(t, x, k=-4.518, c=0.372, F0=9.123):
     '''
     return [x[1], k * x[0] - c * x[1] + F0 * np.sin(x[0] ** 2)]
 
-def lorenz(t, x, sigma=10, beta=3, rho=2):
+def lorenz(t, x, sigma=10, beta=8/3, rho=28):
     '''
     Simulate lorenz attractor timeseries.
     Lorenz equations.
