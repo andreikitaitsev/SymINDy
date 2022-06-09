@@ -1,18 +1,40 @@
 # SymINDy - Symbolic Identification of Nonlinear Dynamics
 
-## Requirements
-
-```commandline
-pip install -r requirements/dev.txt
-```
+## Installing the package
+### Option 1
+Running the shell script
+````bash
+bash install symindy
+````
+### Option 2
+1. Create a new python virtual environment
+````bash
+python -m venv env
+````
+2. Install the requirements using pip
+````bash
+pip install -r requirements.txt
+````
+2. Install the SymINDy package
+````bash
+pip install -e .
+````
+### Option 3
+Run the package inside of the docker container build from Dockerfile.
+````bash
+docker build -t SymINDy .
+````
+Note, you shall have the docker client and daemon installed on your machine.
 
 ## Commands
-
 Dear developer, before pushing, remember to run
 
 ```commandline
  pre-commit run --all-files
 ```
+
+## Demo scripts
+The demo scripts illustrating the performance of SymINDy on some dynamical systems are located in the validation module (symindy/validation).
 
 ## Relevant works
 
