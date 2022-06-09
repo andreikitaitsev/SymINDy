@@ -14,7 +14,7 @@ system = nl.myspring  # choose different systems e.g. odes.linear_3D
 ### linear ODEs
 time_start = 0
 time_end = 10
-nsamples = 60
+nsamples = 200
 time_span = np.linspace(time_start, time_end, nsamples, endpoint=False)
 x0 = [0.4, 1.6]  # change depending on the dimensionality of the system
 
@@ -38,12 +38,13 @@ symindy = SymINDy(verbose=False, sparsity="n_zero_nodes")
 symindy.fit(x_tr, xdot_tr, time_tr)
 
 # predict
-x_te_pred, xdot_te_pred = symindy.predict(x0, time_te)
+x_te_pred, xdot_te_pred = symindy.predict(x_te[0], time_te)
 
 # assess predictions via correlation
 corr_x = r2_score(x_te, x_te_pred)
 corr_xdot = r2_score(xdot_te, xdot_te_pred)
 # aggregate the data in a dict
+
 data = {
     "x_te": x_te,
     "x_te_pred": x_te_pred,
