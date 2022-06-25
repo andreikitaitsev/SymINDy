@@ -28,7 +28,6 @@ def plot2d(data, fig=None, ax=None, figtitle=None, fontsize=16):
 
     if figtitle is not None:
         fig.suptitle(figtitle, fontsize=fontsize+4)
-    fig.tight_layout()
     return fig, axs
 
 
@@ -55,7 +54,6 @@ def plot3d(data, fig=None, ax=None, figtitle=None,fontsize=16):
 
     if figtitle is not None:
         fig.suptitle(figtitle, fontsize=fontsize+4)
-    fig.tight_layout()
     return fig, (ax1, ax2)
 
 def plot3d_(data, fig=None, ax=None, figtitle=None, legend=None, fontsize=16):
@@ -90,7 +88,6 @@ def plot3d_(data, fig=None, ax=None, figtitle=None, legend=None, fontsize=16):
 
     if figtitle is not None:
         fig.suptitle(figtitle, fontsize=fontsize+4)
-    fig.tight_layout()
     return fig, axs
 
 def split(data, ratio):
