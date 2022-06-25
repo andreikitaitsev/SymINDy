@@ -19,7 +19,7 @@ networkx==2.6.3
 numpy==1.21.6
 osqp==0.6.2.post5
 packaging==21.3
-Pillow==9.1.0
+Pillow==9.1.1
 pluggy==0.13.1
 py==1.11.0
 pyparsing==3.0.8
