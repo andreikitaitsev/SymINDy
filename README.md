@@ -11,11 +11,20 @@ bash install symindy
 ````bash
 python -m venv env
 ````
-2. Install the requirements using pip
+2. Activate virtual environment
+```bash
+source env/Scripts/activate
+```
+3. Downgrade setuptools to version 57.0.0 ([required by DEAP](https://github.com/DEAP/deap/issues/610#issuecomment-1146848490) when using python > 3.7)
+```bash
+pip install setuptools==57.0.0
+
+````
+4. Install the requirements using pip
 ````bash
 pip install -r requirements.txt
 ````
-2. Install the SymINDy package
+5. Install the SymINDy package
 ````bash
 pip install -e .
 ````
