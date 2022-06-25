@@ -1,9 +1,6 @@
-#!/bin/bash
-# create venv
-python -m venv env
+python3 -m venv venv
 
-# activate venv
-source env/Scripts/activate
+source venv/bin/activate
 
 # downgrade setuptools - requirement of deap for python 3.10
 pip install setuptools==57.0.0
@@ -12,4 +9,4 @@ pip install setuptools==57.0.0
 pip install -r requirements.txt
 
 # install SymINDy
-pip install -e .
+pip install .
