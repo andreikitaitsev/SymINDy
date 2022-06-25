@@ -1,16 +1,13 @@
-import multiprocessing
 import operator
 import random
-
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pysindy as ps
 from deap import base, creator, gp, tools
-from sklearn.metrics import *
-from sklearn.metrics import r2_score
 
-from symindy.symindy.library import library
+from sklearn.metrics import r2_score
+from symindy.library import Library
 
 
 class SymINDy:
@@ -30,7 +27,7 @@ class SymINDy:
         n_individuals=300,
         sindy_kwargs=None,
         verbose=False,
-        sparsity_coef = 1
+        sparsity_coef=1,
     ):
         """
         Inputs:
@@ -48,7 +45,6 @@ class SymINDy:
         self.dims = dims
         self.library_name = library_name
         self.seed = seed
-        random.seed(seed)
         self.is_time_dependent = is_time_dependent
         self.score_metrics = score_metrics
         self.score_metrics_kwargs = score_metrics_kwargs
@@ -58,8 +54,9 @@ class SymINDy:
         self.sparsity_coef = sparsity_coef
         self.verbose = verbose
 
-
-    def configure_DEAP(self, ntrees=5, nc=0, dimensions=2, max_depth=2, is_time_dependent=False):
+    def configure_DEAP(
+        self, ntrees=5, nc=0, dimensions=2, max_depth=2, is_time_dependent=False
+    ):
         """
         Inputs:
                 ntrees -int, number of trees defining an individual. Defualt=5.
@@ -86,7 +83,7 @@ class SymINDy:
                 return gp.mutNodeReplacement(individual, pset=pset)
 
         def _rename_args(pset, nc, dimensions, is_time_dependent):
-            '''Rename arguments in primitive set.
+            """Rename arguments in primitive set.
             Inputs:
                 pset - primitive set
                 nc -int, number of nonlinear parameters (symbolic constants
@@ -98,36 +95,52 @@ class SymINDy:
                     (first nc arguments come from nc, from nc to
                     dimensions + nc - dimensions, last argument is time if
                     is_time_dependent is True.)
-            '''
+            """
             argnames = {}
             for dim in range(dimensions):
-               argnames["ARG{}".format(dim)]="x{}".format(dim)
+                argnames["ARG{}".format(dim)] = "x{}".format(dim)
             for i in range(nc):
-                argnames["ARG{}".format(i+dimensions)] = "x{}".format(i)
+                argnames["ARG{}".format(i + dimensions)] = "x{}".format(i)
             if is_time_dependent:
-                argnames["ARG{}".format(len(argnames))]='t'
+                argnames["ARG{}".format(len(argnames))] = "t"
             pset.renameArguments(**argnames)
             return pset
 
         def _create_toolbox(pset, ntrees, max_depth=2):
-            '''Create a deap toolbox, creator and history objects.
+            """Create a deap toolbox, creator and history objects.
             Inputs:
                 pset - primitive set to register in the toolbox
                 ntrees - number of trees of symbolic expressions per subindividual
             Outputs:
                 toolbox, creator, history
-            '''
-            from deap import \
-                creator  # TODO figure out why the globally imported creator is not seen inside this function.
+            """
+            from deap import (
+                creator,
+            )  # TODO figure out why the globally imported creator is not seen inside this function.
+
             creator.create("FitnessMax", base.Fitness, weights=(1.0,))
             # subindividual is a primitive tree which is populated from pset
             creator.create("Subindividual", gp.PrimitiveTree)
             creator.create("Individual", list, fitness=creator.FitnessMax)
             toolbox = base.Toolbox()
-            toolbox.register("expr", gp.genHalfAndHalf, pset=pset, type_=pset.ret, min_=0, max_=max_depth)
-            toolbox.register("subindividual", tools.initIterate, creator.Subindividual, toolbox.expr)
-            toolbox.register("individual",tools.initRepeat,creator.Individual,\
-                toolbox.subindividual, n=ntrees)
+            toolbox.register(
+                "expr",
+                gp.genHalfAndHalf,
+                pset=pset,
+                type_=pset.ret,
+                min_=0,
+                max_=max_depth,
+            )
+            toolbox.register(
+                "subindividual", tools.initIterate, creator.Subindividual, toolbox.expr
+            )
+            toolbox.register(
+                "individual",
+                tools.initRepeat,
+                creator.Individual,
+                toolbox.subindividual,
+                n=ntrees,
+            )
             toolbox.register("population", tools.initRepeat, list, toolbox.individual)
             toolbox.register("compile", gp.compile, pset=pset)
             toolbox.register("select", tools.selTournament, tournsize=2)
@@ -136,24 +149,29 @@ class SymINDy:
             history = tools.History()
             toolbox.decorate("mate", history.decorator)
             toolbox.decorate("mutate", history.decorator)
-            toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
-            toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2))
+            toolbox.decorate(
+                "mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2)
+            )
+            toolbox.decorate(
+                "mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=2)
+            )
             return toolbox, creator, history
 
         self.max_depth = max_depth
-        lib = library(
+        lib = Library(
             nc,
             dimensions,
             is_time_dependent=self.is_time_dependent,
-            library_name=self.library_name
+            library_name=self.library_name,
         )
         pset = lib()
 
         pset = _rename_args(pset, nc, dimensions, self.is_time_dependent)
 
-        toolbox, creator, history = _create_toolbox(pset, ntrees, max_depth=self.max_depth)
+        toolbox, creator, history = _create_toolbox(
+            pset, ntrees, max_depth=self.max_depth
+        )
         return toolbox, creator, pset, history
-
 
     @staticmethod
     def evalSymbReg(
@@ -169,7 +187,7 @@ class SymINDy:
         score_metrics_kwargs=None,
         flag_solution=False,
         tr_te_ratio=None,
-        sparsity_coef=1
+        sparsity_coef=1,
     ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
@@ -193,14 +211,15 @@ class SymINDy:
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
         """
+
         def validate_input(x_train):
-            '''check input e.g. x_train shall have at least 3 timepoints (requirement of pysindy
-            differentiation package).'''
+            """check input e.g. x_train shall have at least 3 timepoints (requirement of pysindy
+            differentiation package)."""
             if x_train.shape[0] < 3:
                 raise ValueError("x_train shall have at least 3 timepounts!")
 
         def create_sindy_model(individual, toolbox, sindy_kwargs):
-            '''Create sindy model instance with the custom library generated by DEAP'''
+            """Create sindy model instance with the custom library generated by DEAP"""
             # Transform the tree expression in a callable function
             sr_functions = []
             for i in range(ntrees):
@@ -209,16 +228,27 @@ class SymINDy:
             model = ps.SINDy(feature_library=library, **sindy_kwargs)
             return model
 
-        def fit_sindy_model(model, x_train, x_dot_train=None, time_rec_obs=None, fitkwargs={"quiet": True}):
-            '''Fit pysindy model.
-            '''
+        def fit_sindy_model(
+            model,
+            x_train,
+            x_dot_train=None,
+            time_rec_obs=None,
+            fitkwargs={"quiet": True},
+        ):
+            """Fit pysindy model."""
             model.fit(x_train, t=time_rec_obs, x_dot=x_dot_train, **fitkwargs)
             return model
 
-        def score_sindy_model(model, x_train, time_rec_obs, x_dot_train,
-            score_metrics, score_metrics_kwargs):
-            '''Get the score of the sindy model fitted with
-            symbolic expressions generated by DEAP'''
+        def score_sindy_model(
+            model,
+            x_train,
+            time_rec_obs,
+            x_dot_train,
+            score_metrics,
+            score_metrics_kwargs,
+        ):
+            """Get the score of the sindy model fitted with
+            symbolic expressions generated by DEAP"""
             # TODO maybe add corss-validation fitting
             #! Uses corr coef of thresholded least square
             fitness = model.score(
@@ -228,7 +258,8 @@ class SymINDy:
                 u=None,
                 multiple_trajectories=False,
                 metric=score_metrics,
-                **score_metrics_kwargs)
+                **score_metrics_kwargs
+            )
             return model, fitness
 
         if sindy_kwargs is None:
@@ -243,39 +274,56 @@ class SymINDy:
         model = create_sindy_model(individual, toolbox, sindy_kwargs)
 
         # if train test split, fit the model on train set and score on test set
-        split = lambda x, ratio: (x[:int(ratio*len(x))], x[int(ratio*len(x)):]) if x is not None else (None, None)
+        split = (
+            lambda x, ratio: (x[: int(ratio * len(x))], x[int(ratio * len(x)) :])
+            if x is not None
+            else (None, None)
+        )
 
         if tr_te_ratio is not None:
             x_train_tr, x_train_te = split(x_train, tr_te_ratio)
             x_dot_train_tr, x_dot_train_te = split(x_dot_train, tr_te_ratio)
             time_tr, time_te = split(time_rec_obs, tr_te_ratio)
-            model =fit_sindy_model(model, x_train_tr, x_dot_train_tr, time_tr)
-            model, fitness = score_sindy_model(model, x_train_te, time_te, x_dot_train_te,
-                score_metrics, score_metrics_kwargs)
+            model = fit_sindy_model(model, x_train_tr, x_dot_train_tr, time_tr)
+            model, fitness = score_sindy_model(
+                model,
+                x_train_te,
+                time_te,
+                x_dot_train_te,
+                score_metrics,
+                score_metrics_kwargs,
+            )
         else:
             model = fit_sindy_model(model, x_train, x_dot_train, time_rec_obs)
-            model, fitness = score_sindy_model(model, x_train, time_rec_obs, x_dot_train,
-                score_metrics, score_metrics_kwargs)
+            model, fitness = score_sindy_model(
+                model,
+                x_train,
+                time_rec_obs,
+                x_dot_train,
+                score_metrics,
+                score_metrics_kwargs,
+            )
 
         # Sparsity penalty - coerce the model to keep nnodes as small as possible
-        #n_samples, nterms = model.coefficients().shape # terms - subindivuduals and their interaction: len(individual)*n_samples
+        # n_samples, nterms = model.coefficients().shape # terms - subindivuduals and their interaction: len(individual)*n_samples
         ind_coefs_list = np.split(model.coefficients().T.reshape(-1), ntrees)
-        n_nodes=0
+        n_nodes = 0
         for i in range(ntrees):
             # if zero subindividual
-            if np.all(ind_coefs_list[i]==0):
+            if np.all(ind_coefs_list[i] == 0):
                 continue
             n_nodes += len(individual[i])
         # len(individual)* # 2 max n inputs among dict funcs, (1+2) - max depath
-        max_nnodes = 2**(1+max_depth)*ntrees
+        max_nnodes = 2 ** (1 + max_depth) * ntrees
         # normalize n_nodes by max n_nodes (self.max_depth)
-        fitness -= sparsity_coef* (n_nodes/max_nnodes)
+        fitness -= sparsity_coef * (n_nodes / max_nnodes)
 
         if not flag_solution:
-            return [fitness, ]
+            return [
+                fitness,
+            ]
         else:
             return model
-
 
     # static method shall solve problems with functool.partial in toolbox.register
     @staticmethod
@@ -369,7 +417,7 @@ class SymINDy:
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
             if verbose:
-                print('Fitness: '+str(fit))
+                print("Fitness: " + str(fit))
 
         if halloffame is not None:
             halloffame.update(population)
@@ -421,6 +469,8 @@ class SymINDy:
 
     def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
         """Train SymINDy model on the train data."""
+        # set random seed
+        random.seed(self.seed)
 
         # Initiate DEAP
         toolbox, creator, pset, history = self.configure_DEAP(
@@ -432,7 +482,7 @@ class SymINDy:
             "evaluate",
             self.evalSymbReg,
             ntrees=self.ntrees,
-            max_depth = self.max_depth,
+            max_depth=self.max_depth,
             toolbox=toolbox,
             x_train=x_train,
             x_dot_train=x_dot_train,
@@ -442,7 +492,7 @@ class SymINDy:
             score_metrics_kwargs=self.score_metrics_kwargs,
             flag_solution=False,
             tr_te_ratio=0.8,
-            sparsity_coef=self.sparsity_coef
+            sparsity_coef=self.sparsity_coef,
         )
 
         # Register function to train SINDy model and retrieve it
@@ -450,7 +500,7 @@ class SymINDy:
             "retrieve_model",
             self.evalSymbReg,
             ntrees=self.ntrees,
-            max_depth = self.max_depth,
+            max_depth=self.max_depth,
             toolbox=toolbox,
             x_train=x_train,
             x_dot_train=x_dot_train,
@@ -460,7 +510,7 @@ class SymINDy:
             score_metrics_kwargs=self.score_metrics_kwargs,
             flag_solution=True,
             tr_te_ratio=0.8,
-            sparsity_coef=self.sparsity_coef
+            sparsity_coef=self.sparsity_coef,
         )
 
         mstats = self.init_stats()
@@ -495,19 +545,19 @@ class SymINDy:
         self.history = history
         self.population = pop
         self.log = log
-        self.hof = hof # best individual that ever lived
+        self.hof = hof  # best individual that ever lived
         self.final_model = final_model
 
         # print estimated model
-        print('\n')
+        print("\n")
         for i in range(self.ntrees):
-            print('Estimated library functions: f{0}: {1}'.format(str(i), hof[0][i]))
-        print('Estimated dynamical system: \n')
+            print("Estimated library functions: f{0}: {1}".format(str(i), hof[0][i]))
+        print("Estimated dynamical system: \n")
         self.final_model.print()
-        print('\n')
+        print("\n")
 
     def predict(self, x0, time, simulate_kwargs=None, predict_kwargs=None):
-        '''
+        """
         Predict x and xdot using fitted (trained) model.
         Note, that if you use the model with train-test sets, x0 shall be the first time
         observation of the test set.
@@ -519,7 +569,9 @@ class SymINDy:
         Outputs:
             x_te_pred - predicted x (for the rime interval time)
             xdot_te_pred - xdot predicted from x_te_pred
-        '''
+        """
+        # set random seed
+        random.seed(self.seed)
         if simulate_kwargs is None:
             simulate_kwargs = {}
         if predict_kwargs is None:
@@ -532,7 +584,7 @@ class SymINDy:
 
     @staticmethod
     def score(x, x_pred, xdot, xdot_pred, metric=None, metric_kwargs=None):
-        '''
+        """
         Computes the specified score between (x, x_pred) and (xdot and xdot_pred).
         Inputs:
             x
@@ -544,7 +596,7 @@ class SymINDy:
         Outputs:
             x_score - score for x prediction
             xdot_score - score for xdot prediction (None if xdot is None)
-        '''
+        """
         if metric is None:
             metric = r2_score
         if metric_kwargs is None:
@@ -557,18 +609,30 @@ class SymINDy:
         return x_score, xdot_score
 
     def plot_trees(self, show=False):
-        '''Plot tree of the best individuals (hof[0]).'''
-        expr=self.hof[0]
-        fig, axs = plt.subplots(int(np.floor(self.ntrees/2)),
-            int(np.ceil(self.ntrees/2)), figsize=(16,9))
+        """Plot tree of the best individuals (hof[0])."""
+        expr = self.hof[0]
+        fig, axs = plt.subplots(
+            int(np.floor(self.ntrees / 2)),
+            int(np.ceil(self.ntrees / 2)),
+            figsize=(16, 9),
+        )
         for i, ax in zip(range(self.ntrees), np.ravel(axs)):
             nodes, edges, labels = gp.graph(expr[i])
             g = nx.Graph()
             g.add_nodes_from(nodes)
             g.add_edges_from(edges)
-            pos=nx.nx_agraph.pygraphviz_layout(g, prog="dot")
-            nx.draw(g, pos, with_labels=True, ax=ax, labels=labels,
-            node_color='#99CCFF', edge_color="k", font_size=20, font_color="k")
+            pos = nx.nx_agraph.pygraphviz_layout(g, prog="dot")
+            nx.draw(
+                g,
+                pos,
+                with_labels=True,
+                ax=ax,
+                labels=labels,
+                node_color="#99CCFF",
+                edge_color="k",
+                font_size=20,
+                font_color="k",
+            )
             ax.set_axis_off()
         plt.margins(0.2)
         plt.axis("off")
@@ -576,6 +640,7 @@ class SymINDy:
         if show == True:
             plt.show()
         return fig, ax
+
 
 if __name__ == "__main__":
     pass

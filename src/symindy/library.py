@@ -2,7 +2,7 @@ import numpy as np
 from deap import gp
 
 
-class library:
+class Library:
     def __init__(self, nc, dimensions, is_time_dependent, library_name="generalized"):
         self.nc = nc
         self.dimensions = dimensions
