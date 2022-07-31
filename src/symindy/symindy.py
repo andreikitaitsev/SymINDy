@@ -225,7 +225,9 @@ class SymINDy:
             for i in range(ntrees):
                 sr_functions.append(toolbox.compile(expr=individual[i]))
             library = ps.CustomLibrary(library_functions=sr_functions)
-            model = ps.SINDy(feature_library=library, **sindy_kwargs)
+            
+            stlsq_optimizer = ps.STLSQ(threshold=.01, alpha=.5)
+            model = ps.SINDy(feature_library=library, **sindy_kwargs, optimizer=stlsq_optimizer)
             return model
 
         def fit_sindy_model(
