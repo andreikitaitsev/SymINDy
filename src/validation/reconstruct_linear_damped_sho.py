@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pysindy.utils.odes as odes
 from sklearn.metrics import r2_score
+from pathlib import Path
 
 from symindy.symindy import SymINDy
 from systems import non_linear_systems as nl
@@ -55,4 +56,8 @@ data = {
 
 # plot original and predicted data
 fig, ax = plot2d(data, figtitle="linear_damped_SHO")
-fig.savefig('linear_damped_SHO.png', dpi=300)
+out_dir=Path(__file__).parents[0].joinpath('figures')
+if not out_dir.is_dir():
+    out_dir.mkdir()
+fig.savefig(out_dir.joinpath('linear_damped_SHO.png'), dpi=300)
+plt.show()
