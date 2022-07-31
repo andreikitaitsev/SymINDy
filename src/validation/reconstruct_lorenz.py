@@ -15,8 +15,8 @@ from validation.utils import plot2d, plot3d, split
 # create dynamical system and simulate x, xdot
 system = nl.lorenz
 time_start = 0
-time_end = 100
-nsamples = 10000
+time_end = 40
+nsamples = 4000
 time_span = np.linspace(time_start, time_end, nsamples, endpoint=False)
 x0 = [-8, 8, 27]  # change depending on the dimensionality of the system
 dynsys = DynamicalSystem(system, x0=x0, solve_ivp_kwargs={'atol': 1e-12, 'method': 'LSODA', 'rtol': 1e-12})
