@@ -34,8 +34,6 @@ Aside from toy problems and demonstrations, the majority of problems require
 efficient numerical tools, many of which require the same base code (e.g., for
 performing numerical orbit integration).
 
-
-
 # Statement of need
 
 @Lipson used Genetic Programming to automate the inference of symbolic relations from data.
@@ -43,19 +41,17 @@ A number of open source libraries have been developed in this context
 [@deap; cranmer2020discovering; cranmer2020pysr].
 
 @SINDy101 proposed a framework for data-driven dynamical systems, more recently
-translated in Python [@desilva2020pysindy].
-
-The limitation of SINDy, which goes together with its efficiency and interpretability,
-is the linearity assumption between the features and the state derivative: while different
-optimization frameworks, like SR3, have been introduced [@Champion], these are sensitive to the initial 
-guess on nonlinear parameters, which are assumed to be constant.
+translated in Python [@desilva2020pysindy]. The limitation of SINDy, which goes together 
+with its efficiency and interpretability, is the linearity assumption between the features 
+and the state derivative: while different optimization frameworks, like SR3, 
+have been introduced [@Champion], these are sensitive to the initial 
+guess on nonlinear parameters, which are also assumed to be constant.
 
 A less limiting framework, which trades generality with lack of interpretability,
-consists in the use of Neural Networks to reconstruct differential equations [@sciml; @kidger2021on].
-
-@ManziIAC:2020 introduced the combination of Genetic Programming-based Symbolic Regression
-and Sparse Regression for the reconstruction of ordinary differential equations.
-
+consists in the use of Neural Networks to reconstruct differential equations [@sciml; @kidger2021on]: in order to
+keep interpretability but increase the generality of SINDy, @ManziIAC:2020 introduced the combination 
+of Genetic Programming-based Symbolic Regression and Sparse Regression for the reconstruction of ordinary differential equations,
+which lead to the development of SymINDy.
 # Mathematics
 
 Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
@@ -72,14 +68,6 @@ You can also use plain \LaTeX for equations
 \hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
 \end{equation}
 and refer to \autoref{eq:fourier} from text.
-
-# Citations
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
 # Figures
 
 Figures can be included like this:
@@ -91,6 +79,7 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # Acknowledgements
 
-We acknowledge useful feedbacks from Miles Cranmer.
+We acknowledge Miles Cranmer, Nathan Kutz, Christopher Rackauckas and Joel Rosenfeld for useful discussions on the topic of
+data-driven dynamical systems.
 
 # References
