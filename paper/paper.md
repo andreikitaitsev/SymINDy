@@ -35,11 +35,10 @@ allows one to generate a symbolic representation of orbital anomalies from state
 
 # Statement of need
 
-@Lipson used Genetic Programming to automate the inference of symbolic relations from data.
-A number of open source libraries have been developed in this context
+@Lipson used Genetic Programming to automate the inference of symbolic relations from data. Building on the work, a number of open source libraries have been developed
 [@deap; cranmer2020discovering; cranmer2020pysr].
 
-@SINDy101 proposed a framework for data-driven dynamical systems, more recently
+@SINDy101 later proposed a different framework for data-driven dynamical systems, more recently
 translated in Python [@desilva2020pysindy]. The limitation of SINDy, which goes together 
 with its efficiency and interpretability, is the linearity assumption between the features 
 and the state derivative: while different optimization frameworks, like SR3, 
@@ -49,14 +48,29 @@ guess on nonlinear parameters, which are also assumed to be constant.
 A less limiting framework, which trades generality with lack of interpretability,
 consists in the use of Neural Networks to reconstruct differential equations [@sciml; @kidger2021on]: in order to
 keep interpretability but increase the generality of SINDy, @ManziIAC:2020 introduced the combination 
-of Genetic Programming-based Symbolic Regression and Sparse Regression for the reconstruction of ordinary differential equations,
-which lead to the development of SymINDy.
+of Genetic Programming-based Symbolic Regression and Sparse Regression for the reconstruction of ordinary differential equations, which has lead to the development of SymINDy.
 
 # Mathematics
+
+The starting assumption is access to a number of measurements, in general noisy, that can be arranged into a snapshot matrix:
+
+$$
+    \mathbf{Y} = [\mathbf{y}_1(t_1), \ \ \mathbf{y}_2(t_2), \ \ \ldots, \ \ \mathbf{y}_n(t_n)]
+$$
+
+which can be used to numerically estimate a state-derivative matrix
+
+$$
+    \dot{\mathbf{Y}} = [\dot{\mathbf{y}}_1(t_1), \ \ \dot{\mathbf{y}}_2(t_2), \ \ \ldots, \ \ \dot{\mathbf{y}}_n(t_n)]
+$$
+
+The two quantities are assumed to be related by
 
 $$     
 \dot{\mathbf{Y}} \approx \Theta(\mathbf{Y}) \boldsymbol\Xi
 $$
+
+in which the state-dependent matrix is associated with a genetic programming individual, defined as a set of symbolic expressions, which in general are nonlinear and are characterized by nonlinear parameters
 
 $$
 {\Theta(\mathbf{Y})} = 
@@ -65,19 +79,8 @@ $$
 \end{bmatrix}
 $$
 
-<img src="figures/tree0.png" alt="drawing" width="200"/>
-<img src="figures/tree1.png" alt="drawing" width="200"/>
-<img src="figures/tree2.png" alt="drawing" width="200"/>
-
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% }
-
+ $\boldsymbol\Xi$ is a sparse matrix of constant coefficients, which is computed using the Sequential Thresholded Least Squares (STLSQ) algorithm.
+ 
 # Acknowledgements
 
 We acknowledge Miles Cranmer, Nathan Kutz, Christopher Rackauckas and Joel Rosenfeld for useful discussions on the topic of
