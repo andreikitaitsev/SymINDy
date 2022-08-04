@@ -24,15 +24,14 @@ bibliography: paper.bib
 
 # Summary
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+The context of data-driven dynamical systems is characterized by the goal of 
+automating the discovery of governing equations from data, for example with Machine Learning 
+techniques, by means of constructing interpretable, 
+white-box models with both generalizing and extrapolating capabilities.
+
+Leveraging the powerful modelling capacity of symbolic regression and the 
+sparse representability of dynamical systems, the python library **SymINDy** (Symbolic Identification of Nonlinear Dynamics) 
+allows one to generate a symbolic representation of orbital anomalies from state observations only.  
 
 # Statement of need
 
@@ -52,22 +51,24 @@ consists in the use of Neural Networks to reconstruct differential equations [@s
 keep interpretability but increase the generality of SINDy, @ManziIAC:2020 introduced the combination 
 of Genetic Programming-based Symbolic Regression and Sparse Regression for the reconstruction of ordinary differential equations,
 which lead to the development of SymINDy.
+
 # Mathematics
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+$$     
+\dot{\mathbf{Y}} \approx \Theta(\mathbf{Y}) \boldsymbol\Xi
+$$
 
-Double dollars make self-standing equations:
+$$
+{\Theta(\mathbf{Y})} = 
+\begin{bmatrix}
+\Theta_1(\mathbf{Y}) & \Theta_2(\mathbf{Y}) & \Theta_3(\mathbf{Y})
+\end{bmatrix}
+$$
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
+<img src="figures/tree0.png" alt="drawing" width="200"/>
+<img src="figures/tree1.png" alt="drawing" width="200"/>
+<img src="figures/tree2.png" alt="drawing" width="200"/>
 
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
 # Figures
 
 Figures can be included like this:
