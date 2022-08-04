@@ -30,7 +30,7 @@ xdot_tr, xdot_te = split(xdot, ratio)
 time_tr, time_te = split(time_span, ratio)
 
 # istantiate symINDy
-symindy = SymINDy(verbose=False, sparsity_coef=1, library_name="generalized")
+symindy = SymINDy(sparsity_coef=1, library_name="generalized")
 
 # fit symINDy on the training data
 symindy.fit(x_tr, xdot_tr, time_tr)
@@ -58,5 +58,5 @@ fig, ax = plot2d(data, figtitle="myspring")
 out_dir=Path(__file__).parents[0].joinpath('figures')
 if not out_dir.is_dir():
     out_dir.mkdir()
-fig.savefig(out_dir.joinpath('myspring.png'), dpi=300)
+fig.savefig(out_dir.joinpath('myspring.svg'), dpi=300)
 plt.show()

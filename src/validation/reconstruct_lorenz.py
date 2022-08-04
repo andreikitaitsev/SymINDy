@@ -29,7 +29,7 @@ xdot_tr, xdot_te = split(xdot, ratio)
 time_tr, time_te = split(time_span, ratio)
 
 # istantiate symINDy
-symindy = SymINDy(verbose=True, sparsity_coef=1.0, library_name="polynomial", dims=3)
+symindy = SymINDy(sparsity_coef=1.0, library_name="polynomial", dims=3)
 
 # fit symINDy on the training data
 symindy.fit(x_tr, xdot_tr, time_tr)
@@ -57,6 +57,6 @@ fig, ax = plot3d(data, figtitle="lorenz")
 out_dir=Path(__file__).parents[0].joinpath('figures')
 if not out_dir.is_dir():
     out_dir.mkdir()
-fig.savefig(out_dir.joinpath('lorenz.png'), dpi=300)
+fig.savefig(out_dir.joinpath('lorenz.svg'), dpi=300)
 
 plt.show()

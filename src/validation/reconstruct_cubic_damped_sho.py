@@ -30,7 +30,7 @@ xdot_tr, xdot_te = split(xdot, ratio)
 time_tr, time_te = split(time_span, ratio)
 
 # istantiate symINDy
-symindy = SymINDy(verbose=False, sparsity_coef=0.01, library_name="polynomial", ngen=10)
+symindy = SymINDy(sparsity_coef=0.01, library_name="polynomial", ngen=10)
 
 # fit symINDy on the training data
 symindy.fit(x_tr, x_dot_train=xdot_tr, time_rec_obs=time_tr)
@@ -58,5 +58,5 @@ fig, ax = plot2d(data, figtitle="cubic_damped_SHO")
 out_dir=Path(__file__).parents[0].joinpath('figures')
 if not out_dir.is_dir():
     out_dir.mkdir()
-fig.savefig(out_dir.joinpath('cubic_damped_SHO.png'), dpi=300)
+fig.savefig(out_dir.joinpath('cubic_damped_SHO.svg'), dpi=300)
 plt.show()
