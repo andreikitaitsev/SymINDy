@@ -5,12 +5,14 @@ This library is a generalization of [SINDy](https://github.com/dynamicslab/pysin
 # About
 Let's simultate some well-known dynmical systems and try to reconstruct them with SymINDy.
 We will use following dynamical systems:
-- (Linear Damped SHO)[https://en.wikipedia.org/wiki/Duffing_equation] 
-- (Cubic Damped SHO)[https://en.wikipedia.org/wiki/Duffing_equation]
-- (Lorenz attractor)[https://en.wikipedia.org/wiki/Lorenz_system]
+- [Linear Damped SHO](https://en.wikipedia.org/wiki/Duffing_equation) 
+- [Cubic Damped SHO](https://en.wikipedia.org/wiki/Duffing_equation)
+- [Lorenz attractor](https://en.wikipedia.org/wiki/Lorenz_system)
 - myspring (author defined perturbing oscillator)
-The first three dynamical systems (were reconstructed by SINDy)[https://pysindy.readthedocs.io/en/latest/examples/3_original_paper.html], however, the last system serves as a good example to illustrate the limitations of SINDy related to the linearity of the reconstruction algorithm.
+The first three dynamical systems [were reconstructed by SINDy](https://pysindy.readthedocs.io/en/latest/examples/3_original_paper.html), however, the last system serves as a good example to illustrate the limitations of SINDy related to the linearity of the reconstruction algorithm.
+We will go through each of the systems step by step.
 
+## 
 ## Installing the package
 ### Option 1
 Running the shell script
