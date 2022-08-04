@@ -2,6 +2,15 @@
 
 This library is a generalization of [SINDy](https://github.com/dynamicslab/pysindy), to be used for the reconstruction of dynamical systems with strong nonlinearities, which require the introduction of a combinatorial search in the elementary functions associated with the linear regression part of SINDy.
 
+# About
+Let's simultate some well-known dynmical systems and try to reconstruct them with SymINDy.
+We will use following dynamical systems:
+- (Linear Damped SHO)[https://en.wikipedia.org/wiki/Duffing_equation] 
+- (Cubic Damped SHO)[https://en.wikipedia.org/wiki/Duffing_equation]
+- (Lorenz attractor)[https://en.wikipedia.org/wiki/Lorenz_system]
+- myspring (author defined perturbing oscillator)
+The first three dynamical systems (were reconstructed by SINDy)[https://pysindy.readthedocs.io/en/latest/examples/3_original_paper.html], however, the last system serves as a good example to illustrate the limitations of SINDy related to the linearity of the reconstruction algorithm.
+
 ## Installing the package
 ### Option 1
 Running the shell script
