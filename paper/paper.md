@@ -31,12 +31,12 @@ white-box models with both generalizing and extrapolating capabilities.
 
 Leveraging the powerful modelling capacity of symbolic regression and the 
 sparse representability of dynamical systems, the python library **SymINDy** (Symbolic Identification of Nonlinear Dynamics) 
-allows one to generate a symbolic representation of orbital anomalies from state observations only.  
+allows one to generate a symbolic representation of deterministic dynamica systems from state observations only.  
 
 # Statement of need
 
 @Lipson used Genetic Programming to automate the inference of symbolic relations from data. Building on the work, a number of open source libraries have been developed
-[@deap; cranmer2020discovering; cranmer2020pysr].
+[@deap; @cranmer2020discovering; @cranmer2020pysr].
 
 @SINDy101 later proposed a different framework for data-driven dynamical systems, more recently
 translated in Python [@desilva2020pysindy]. The limitation of SINDy, which goes together 
@@ -48,11 +48,11 @@ guess on nonlinear parameters, which are also assumed to be constant.
 A less limiting framework, which trades generality with lack of interpretability,
 consists in the use of Neural Networks to reconstruct differential equations [@sciml; @kidger2021on]: in order to
 keep interpretability but increase the generality of SINDy, @ManziIAC:2020 introduced the combination 
-of Genetic Programming-based Symbolic Regression and Sparse Regression for the reconstruction of ordinary differential equations, which has lead to the development of SymINDy.
+of Genetic Programming-based Symbolic Regression and Sparse Regression for the reconstruction of ordinary differential equations, which has lead to the development of the **SymINDy** library.
 
 # Mathematics
 
-The starting assumption is access to a number of measurements, in general noisy, that can be arranged into a snapshot matrix:
+The starting assumption is access to a number of measurements that can be arranged into a snapshot matrix:
 
 $$
     \mathbf{Y} = [\mathbf{y}_1(t_1), \ \ \mathbf{y}_2(t_2), \ \ \ldots, \ \ \mathbf{y}_n(t_n)]
@@ -79,7 +79,7 @@ $$
 \end{bmatrix}
 $$
 
- $\boldsymbol\Xi$ is a sparse matrix of constant coefficients, which is computed using the Sequential Thresholded Least Squares (STLSQ) algorithm.
+ $\boldsymbol\Xi$ is a sparse matrix of constant coefficients, which is computed using the Sequential Thresholded Least Squares (STLSQ) algorithm. Such algorithm is performed for each individual evaluation of the parallelizable genetic programming-based combinatorial seach in the space of symbolic expressions.
  
 # Acknowledgements
 
