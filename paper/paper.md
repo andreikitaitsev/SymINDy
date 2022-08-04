@@ -1,115 +1,89 @@
 ---
-title: 'Gala: A Python package for galactic dynamics'
+title: 'SynINDy: Symbolic Identification of Nonlinear Dynamics'
 tags:
   - Python
-  - astronomy
-  - dynamics
-  - galactic dynamics
-  - milky way
+  - Symbolic Regression
+  - Genetic Programming
+  - Sparse Regression
+  - Data-driven Dynamical Systems
 authors:
-  - name: Adrian M. Price-Whelan
-    orcid: 0000-0000-0000-0000
-    equal-contrib: true
-    affiliation: "1, 2" # (Multiple affiliations must be quoted)
-  - name: Author Without ORCID
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+  - name: Andrei Kitaitsev
+    affiliation: 1 # (Multiple affiliations must be quoted)
+  - name: Matteo Manzi
+    orcid: 0000-0002-5229-0746
     affiliation: 2
-  - name: Author with no affiliation
-    corresponding: true # (This is how to denote the corresponding author)
-    affiliation: 3
-affiliations:
- - name: Lyman Spitzer, Jr. Fellow, Princeton University, USA
-   index: 1
- - name: Institution Name, Country
-   index: 2
- - name: Independent Researcher, Country
-   index: 3
-date: 13 August 2017
-bibliography: paper.bib
 
-# Optional fields if submitting to a AAS journal too, see this blog post:
-# https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-aas-journal: Astrophysical Journal <- The name of the AAS journal.
+affiliations:
+ - name: CURE finance, Berlin, Germany
+   index: 1
+ - name: DATACRUNCH, Paris, France
+   index: 2
+date: 04 August 2022
+bibliography: paper.bib
 ---
 
 # Summary
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+The context of data-driven dynamical systems is characterized by the goal of 
+automating the discovery of governing equations from data, for example with Machine Learning 
+techniques, by means of constructing interpretable, 
+white-box models with both generalizing and extrapolating capabilities.
+
+Leveraging the powerful modelling capacity of symbolic regression and the 
+sparse representability of dynamical systems, the python library **SymINDy** (Symbolic Identification of Nonlinear Dynamics) 
+allows one to generate a symbolic representation of deterministic dynamica systems from state observations only.  
 
 # Statement of need
 
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
+@Lipson used Genetic Programming to automate the inference of symbolic relations from data. Building on the work, a number of open source libraries have been developed
+[@deap; @cranmer2020discovering; @cranmer2020pysr].
 
-`Gala` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
-design, and support for Astropy functionality in `Gala` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike.
+@SINDy101 later proposed a different framework for data-driven dynamical systems, more recently
+translated in Python [@desilva2020pysindy]. The limitation of SINDy, which goes together 
+with its efficiency and interpretability, is the linearity assumption between the features 
+and the state derivative: while different optimization frameworks, like SR3, 
+have been introduced [@Champion], these are sensitive to the initial 
+guess on nonlinear parameters, which are also assumed to be constant.
+
+A less limiting framework, which trades generality with lack of interpretability,
+consists in the use of Neural Networks to reconstruct differential equations [@sciml; @kidger2021on]: in order to
+keep interpretability but increase the generality of SINDy, @ManziIAC:2020 introduced the combination 
+of Genetic Programming-based Symbolic Regression and Sparse Regression for the reconstruction of ordinary differential equations, which has lead to the development of the **SymINDy** library.
 
 # Mathematics
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+The starting assumption is access to a number of measurements that can be arranged into a snapshot matrix:
 
-Double dollars make self-standing equations:
+$$
+    \mathbf{Y} = [\mathbf{y}_1(t_1), \ \ \mathbf{y}_2(t_2), \ \ \ldots, \ \ \mathbf{y}_n(t_n)]
+$$
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
+which can be used to numerically estimate a state-derivative matrix
 
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
+$$
+    \dot{\mathbf{Y}} = [\dot{\mathbf{y}}_1(t_1), \ \ \dot{\mathbf{y}}_2(t_2), \ \ \ldots, \ \ \dot{\mathbf{y}}_n(t_n)]
+$$
 
-# Citations
+The two quantities are assumed to be related by
 
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
+$$     
+\dot{\mathbf{Y}} \approx \Theta(\mathbf{Y}) \boldsymbol\Xi
+$$
 
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
+in which the state-dependent matrix is associated with a genetic programming individual, defined as a set of symbolic expressions, which in general are nonlinear and are characterized by nonlinear parameters
 
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
+$$
+{\Theta(\mathbf{Y})} = 
+\begin{bmatrix}
+\Theta_1(\mathbf{Y}) & \Theta_2(\mathbf{Y}) & \Theta_3(\mathbf{Y})
+\end{bmatrix}
+$$
 
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% }
-
+ $\boldsymbol\Xi$ is a sparse matrix of constant coefficients, which is computed using the Sequential Thresholded Least Squares (STLSQ) algorithm. Such algorithm is performed for each individual evaluation of the parallelizable genetic programming-based combinatorial seach in the space of symbolic expressions.
+ 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+We acknowledge Miles Cranmer, Nathan Kutz, Christopher Rackauckas and Joel Rosenfeld for useful discussions on the topic of
+data-driven dynamical systems.
 
 # References
