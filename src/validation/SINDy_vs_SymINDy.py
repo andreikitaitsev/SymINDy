@@ -9,7 +9,7 @@ from symindy.symindy import SymINDy
 from systems import non_linear_systems as nl
 from systems.dynamical_system import DynamicalSystem
 from systems.non_linear_systems import lorenz
-from validation.utils import plot2d, plot3d, split
+from validation.utils import plot2d, plot3d, plot_compare_sindy_simindy, split
 
 ## myspring
 #    xdot = v
@@ -61,15 +61,21 @@ xdot_te_pred_sindy = sindy.predict(x_te_pred_sindy)
 corr_x_sindy = r2_score(x_te, x_te_pred_sindy)
 corr_xdot_sindy = r2_score(xdot_te, xdot_te_pred_sindy)
 
-# plot original systems and predictions os symindy and pysindy
-fig, axs = plt.subplots(2)
-axs[0].plot(x_te, color='b')
-axs[0].plot(x_te_pred_symindy, color='r')
-axs[0].plot(x_te_pred_sindy, color='g')
-axs[0].legend(['original','symindy','sindy'])
+data = {
+    "x_te": x_te,
+    "x_te_pred_symindy": x_te_pred_symindy,
+    "x_te_pred_sindy": x_te_pred_sindy,
+    "xdot_te": xdot_te,
+    "xdot_te_pred_symindy": xdot_te_pred_symindy,
+    "xdot_te_pred_sindy": xdot_te_pred_sindy
+    }
 
-axs[1].plot(xdot_te, color='b')
-axs[1].plot(xdot_te_pred_symindy, color='r')
-axs[1].plot(xdot_te_pred_sindy, color='g')
-axs[1].legend(['original','symindy','sindy'])
+# plot 
+fig, axs = plot_compare_sindy_simindy(data, figtitle="SymINDy vs SINDy")
+
+# save the figure
+out_dir=Path(__file__).parents[0].joinpath('figures')
+if not out_dir.is_dir():
+    out_dir.mkdir()
+fig.savefig(out_dir.joinpath('symindy_vs_sindy.svg'), dpi=300)
 plt.show()
