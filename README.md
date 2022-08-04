@@ -12,7 +12,21 @@ We will use following dynamical systems:
 The first three dynamical systems [were reconstructed by SINDy](https://pysindy.readthedocs.io/en/latest/examples/3_original_paper.html), however, the last system serves as a good example to illustrate the limitations of SINDy related to the linearity of the reconstruction algorithm.
 We will go through each of the systems step by step.
 
-## 
+# Project architecture
+We follow [scikit learn conventions](https://scikit-learn.org/stable/developers/develop.html) and best practices for the [development of python packages](https://packaging.python.org/en/latest/tutorials/packaging-projects/). 
+The source code is located in the src directory. It consists of several modules: 
+- symindy - main module containing SymINDy class
+- systems - supplementary module containing classes to conveniently reconstruct dynamical systems
+- validation - supplementary module containing the code to reconstruct some dynamical systems are illustrate the performance of the model as well as its comparison with the SINDy algorithm.
+
+Analogously to scikit learn estimators, *SymINDy* main class implements the methods *fit*, *predict*, *score* and *plot_trees*.
+
+## Linear Damped SHO
+*To reconstruct the figure below run the script ```reconstruct_linear_damped_sho.py``` from simindy.validation package.*
+
+We simulate Linear Damped SHO on specific time-range, separate the simulated data into the train and test set (train-test ratio 0.7: 0.3). Then we *fit* SymINDy instance on the train set and call the *predict* method on the test set. The predicted data is plotted along with the original data.
+
+
 ## Installing the package
 ### Option 1
 Running the shell script
