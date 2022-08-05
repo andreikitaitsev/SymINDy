@@ -3,8 +3,8 @@
 This library is a generalization of [SINDy](https://github.com/dynamicslab/pysindy), to be used for the reconstruction of dynamical systems with strong nonlinearities, which require the introduction of a combinatorial search in the elementary functions associated with the linear regression part of SINDy.
 
 # About
-Let's simultate some well-known dynmical systems and try to reconstruct them with SymINDy.
-We will use following dynamical systems:
+Let's simulate some well-known dynamical systems and try to reconstruct them with SymINDy.
+We will use the following dynamical systems:
 - [Linear Damped SHO](https://en.wikipedia.org/wiki/Duffing_equation) 
 - [Cubic Damped SHO](https://en.wikipedia.org/wiki/Duffing_equation)
 - [Lorenz attractor](https://en.wikipedia.org/wiki/Lorenz_system)
@@ -17,14 +17,14 @@ We follow [scikit learn conventions](https://scikit-learn.org/stable/developers/
 The source code is located in the src directory. It consists of several modules: 
 - symindy - main module containing SymINDy class
 - systems - supplementary module containing classes to conveniently reconstruct dynamical systems
-- validation - supplementary module containing the code to reconstruct some dynamical systems are illustrate the performance of the model as well as its comparison with the SINDy algorithm.
+- validation - supplementary module containing the code to reconstruct some dynamical systems and illustrate the performance of the model as well as its comparison with the SINDy algorithm.
 
 Analogously to scikit learn estimators, *SymINDy* main class implements the methods *fit*, *predict*, *score* and *plot_trees*.
 
 ## Linear Damped SHO
 *To reconstruct the figure below run the script ```reconstruct_linear_damped_sho.py``` from simindy.validation package.*
 
-We simulate Linear Damped SHO on specific time-range, separate the simulated data into the train and test set (train-test ratio 0.7: 0.3). Then we *fit* SymINDy instance on the train set and call the *predict* method on the test set. The predicted data is plotted along with the original data.
+We simulate Linear Damped SHO on a specific time range, separate the simulated data into the train and test set (train-test ratio 0.7: 0.3). Then we *fit* SymINDy instance on the train set and call the *predict* method on the test set. The predicted data is plotted along with the original data.
 Running the script prints the reconstructed equation of the dynamical system to std output.
 
 ```
@@ -54,7 +54,7 @@ The coefficient of determination between original and reconstructed data is 1.0.
 ## Cubic Damped SHO
 *To reconstruct the figure below run the script ```reconstruct_cubic_damped_sho.py``` from simindy.validation package.*
 
-Same as before, we simulate Cubic Damped SHO on specific time-range, separate the simulated data into the train and test set (train-test ratio 0.7: 0.3). Then we *fit* SymINDy instance on the train set and call the *predict* method on the test set. The predicted data is plotted along with the original data.
+Same as before, we simulate Cubic Damped SHO on a specific time range, separate the simulated data into the train and test set (train-test ratio 0.7: 0.3). Then we *fit* SymINDy instance on the train set and call the *predict* method on the test set. The predicted data is plotted along with the original data.
 Running the script prints the reconstructed equation of the dynamical system to std output.
 
 ```
@@ -87,7 +87,7 @@ The coefficient of determination between original and reconstructed data is 1.0.
 ## Lorenz attractor
 *To reconstruct the figure below run the script ```reconstruct_lorenz.py``` from symindy.validation package.*
 
-Same as before, we simulate Lorenz Attractor on specific time-range, separate the simulated data into the train and test set (train-test ratio 0.7: 0.3). Then we *fit* SymINDy instance on the train set and call the *predict* method on the test set. The predicted data is plotted along with the original data.
+Same as before, we simulate Lorenz Attractor on specific a time range, separate the simulated data into the train and test set (train-test ratio 0.7: 0.3). Then we *fit* SymINDy instance on the train set and call the *predict* method on the test set. The predicted data is plotted along with the original data.
 Running the script prints the reconstructed equation of the dynamical system to std output.
 
 ```
@@ -118,13 +118,13 @@ Again, we correctly reconstruct the numeric equation and predict the test data.
 The coefficient of determination between original and reconstructed data is 1.0. 
 
 
-Thus, we accurately reconstruct dynamical linear and non-linear dynamical systems using symbolic regression to look for basis (library) functions. However, the main advantage of SymINDy is revealed with reconstruction highly non-linear systems.
+Thus, we accurately reconstruct dynamical linear and non-linear dynamical systems using symbolic regression to look for basis (library) functions. However, the main advantage of SymINDy is revealed with the reconstruction of highly non-linear systems.
 
 
 ## Myspring (nonlinearly perturbed oscillator)
 *To reconstruct the figure below run the script ```reconstruct_myspring.py``` from simindy.validation package.*
 Again, the fitting procedure is same as above.
-Howver, this time we focus on the original system first.
+However, this time we focus on the original system first.
 
     (x0)' = x1
     (x1)' = - -4.518 x0 - 0.372 x1 + 9.123*sin(x0**2)
@@ -167,7 +167,7 @@ Well, probably our statement above still holds: SINDy cannot estimate non-linear
 
 
 ## Summary
-SymINDy is a new algorithm for the reconstruction of non-linear dynamics. It uses symolic regression and SINDy algorithm to recover the systems of equations from time-series observations. 
+SymINDy is a new algorithm for the reconstruction of non-linear dynamics. It uses symbolic regression and SINDy algorithm to recover the systems of equations from time-series observations. 
 It is free from the linearity assumption and thus is able to reconstruct systems unreachable for SINDy.
 
 SymINDy can be applied to multiple theoretical and applied problems from blood dynamics to financial forecasting.  
@@ -204,7 +204,7 @@ pip install -r requirements.txt
 pip install -e .
 ````
 #### Option 3
-Run the package inside of the docker container build from Dockerfile.
+Run the package inside of the docker container built from Dockerfile.
 ````bash
 docker build -t SymINDy .
 ````
