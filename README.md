@@ -84,8 +84,8 @@ Again, we correctly reconstruct the numeric equation and predict the test data.
 The coefficient of determination between original and reconstructed data is 1.0. 
 
 
-## Lonerz attractor
-*To reconstruct the figure below run the script ```reconstruct_lonerz.py``` from simindy.validation package.*
+## Lorenz attractor
+*To reconstruct the figure below run the script ```reconstruct_lorenz.py``` from symindy.validation package.*
 
 Same as before, we simulate Lorenz Attractor on specific time-range, separate the simulated data into the train and test set (train-test ratio 0.7: 0.3). Then we *fit* SymINDy instance on the train set and call the *predict* method on the test set. The predicted data is plotted along with the original data.
 Running the script prints the reconstructed equation of the dynamical system to std output.
