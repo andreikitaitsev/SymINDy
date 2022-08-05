@@ -45,15 +45,12 @@ corr_xdot = r2_score(xdot_te, xdot_te_pred)
 data = {
     "x_te": x_te,
     "x_te_pred": x_te_pred,
-    "xdot_te": xdot_te,
-    "xdot_te_pred": xdot_te_pred,
-    "x_metric": {"name": "r2", "value": corr_x},
-    "xdot_metric": {"name": "r2", "value": corr_xdot},
+    "x_metric": {"name": "R2", "value": corr_x},
     "time": time_te,
 }
 
 # plot original and predicted data
-fig, ax = plot3d(data, figtitle="lorenz")
+fig, ax = plot3d(data, figtitle="Lorenz")
 out_dir=Path(__file__).parents[0].joinpath('figures')
 if not out_dir.is_dir():
     out_dir.mkdir()

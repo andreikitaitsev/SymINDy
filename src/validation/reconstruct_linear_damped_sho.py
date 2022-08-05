@@ -55,7 +55,7 @@ data = {
 }
 
 # plot original and predicted data
-fig, ax = plot2d(data, figtitle="linear_damped_SHO")
+fig, ax = plot2d(data, figtitle="Linear Damped SHO")
 out_dir=Path(__file__).parents[0].joinpath('figures')
 if not out_dir.is_dir():
     out_dir.mkdir()
