@@ -683,7 +683,7 @@ class SymINDy:
         Parameters:
             show - bool, if True, show the figure.
         Returns:
-            fig, ax - plt figure and axis objects
+            (fig, ax) - tuple of matplotlib figure and axis objects or None in case of error.
         """
         if self.verbose:
             logging.info(self.__class__.__name__ + 'plot_trees')
@@ -717,11 +717,11 @@ class SymINDy:
             plt.tight_layout()
             if show == True:
                 plt.show()
-            return fig, ax
+            return (fig, ax)
         except Exception as exe:
             logging.error('Failed plotting the trees. Most likely, you do not have pygraphviz installed.\
             Original Error: {}'.format(exe))
-            return None
+            return None, None
 
 
 
