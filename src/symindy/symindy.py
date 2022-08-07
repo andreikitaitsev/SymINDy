@@ -1,5 +1,7 @@
 import operator
 import random
+import sys
+import logging
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -64,6 +66,8 @@ class SymINDy:
         ----------
 
         """
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO, 
+            format='%(levelname)s %(message)s')
         self.ngen = ngen
         self.ntrees = ntrees
         self.dims = dims
@@ -80,6 +84,9 @@ class SymINDy:
         self.seed = seed
         self.is_time_dependent = is_time_dependent
         self.verbose = verbose
+        if self.verbose:
+            logging.info(self.__class__.__name__ + '__init__')
+
 
     def configure_DEAP(
         self, 
@@ -101,6 +108,8 @@ class SymINDy:
         Returns:
             toolbox, creator, pset, history - deap object instances. See the link above
         """
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'configure_DEAP')
 
         def _random_mating_operator(ind1, ind2):
             roll = random.random()
@@ -524,6 +533,9 @@ class SymINDy:
         Returns:
             self
         """
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'fit')
+
         # set random seed
         random.seed(self.seed)
 
@@ -627,6 +639,8 @@ class SymINDy:
             x_te_pred - predicted x (for the rime interval time)
             xdot_te_pred - xdot predicted from x_te_pred
         """
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'predict')
         # set random seed
         random.seed(self.seed)
 
@@ -638,8 +652,7 @@ class SymINDy:
 
         return x_te_pred, xdot_te_pred
 
-    @staticmethod
-    def score(x, x_pred, xdot, xdot_pred, metric = r2_score, metric_kwargs={}):
+    def score(self, x, x_pred, xdot, xdot_pred, metric = r2_score, metric_kwargs={}):
         """
         Compute the metric between (x, x_pred) and (xdot and xdot_pred).
         Parameters:
@@ -653,50 +666,63 @@ class SymINDy:
             x_score - score for x prediction
             xdot_score - score for xdot prediction (None if xdot is None)
         """
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'score')
         x_score = metric(x, x_pred, **metric_kwargs)
         try:
             xdot_score = metric(xdot, xdot_pred, **metric_kwargs)
         except ValueError:
             xdot_score = None
+    
         return x_score, xdot_score
 
     def plot_trees(self, show=False):
         """Plot the tree of the best individuals (hof[0]).
+        Note, this function requires pygraphviz to be installed which is often installed separately
+        for windows. Issue: https://stackoverflow.com/questions/40809758/howto-install-pygraphviz-on-windows-10-64bit
         Parameters:
             show - bool, if True, show the figure.
         Returns:
             fig, ax - plt figure and axis objects
         """
-        expr = self.hof[0]
-        fig, axs = plt.subplots(
-            int(np.floor(self.ntrees / 2)),
-            int(np.ceil(self.ntrees / 2)),
-            figsize=(16, 9),
-        )
-        for i, ax in zip(range(self.ntrees), np.ravel(axs)):
-            nodes, edges, labels = gp.graph(expr[i])
-            g = nx.Graph()
-            g.add_nodes_from(nodes)
-            g.add_edges_from(edges)
-            pos = nx.nx_agraph.pygraphviz_layout(g, prog="dot")
-            nx.draw(
-                g,
-                pos,
-                with_labels=True,
-                ax=ax,
-                labels=labels,
-                node_color="#99CCFF",
-                edge_color="k",
-                font_size=20,
-                font_color="k",
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'plot_trees')
+        try:
+            expr = self.hof[0]
+            fig, axs = plt.subplots(
+                int(np.floor(self.ntrees / 2)),
+                int(np.ceil(self.ntrees / 2)),
+                figsize=(16, 9),
             )
-            ax.set_axis_off()
-        plt.margins(0.2)
-        plt.axis("off")
-        plt.tight_layout()
-        if show == True:
-            plt.show()
-        return fig, ax
+            for i, ax in zip(range(self.ntrees), np.ravel(axs)):
+                nodes, edges, labels = gp.graph(expr[i])
+                g = nx.Graph()
+                g.add_nodes_from(nodes)
+                g.add_edges_from(edges)
+                pos = nx.nx_agraph.pygraphviz_layout(g, prog="dot")
+                nx.draw(
+                    g,
+                    pos,
+                    with_labels=True,
+                    ax=ax,
+                    labels=labels,
+                    node_color="#99CCFF",
+                    edge_color="k",
+                    font_size=20,
+                    font_color="k",
+                )
+                ax.set_axis_off()
+            plt.margins(0.2)
+            plt.axis("off")
+            plt.tight_layout()
+            if show == True:
+                plt.show()
+            return fig, ax
+        except Exception as exe:
+            logging.error('Failed plotting the trees. Most likely, you do not have pygraphviz installed.\
+            Original Error: {}'.format(exe))
+            return None
+
 
 
 # disable running file as main
