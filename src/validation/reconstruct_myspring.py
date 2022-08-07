@@ -1,7 +1,6 @@
 """Test the quality of the reconstructuion and prediction of different dynamical systems."""
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import r2_score
 from pathlib import Path
 
 from symindy.symindy import SymINDy
@@ -39,8 +38,7 @@ symindy.fit(x_tr, xdot_tr, time_tr)
 x_te_pred, xdot_te_pred = symindy.predict(x_te[0], time_te)
 
 # assess predictions via correlation
-corr_x = r2_score(x_te, x_te_pred)
-corr_xdot = r2_score(xdot_te, xdot_te_pred)
+corr_x, corr_xdot = symindy.score(x_te, x_te_pred, xdot_te, xdot_te_pred)
 
 # aggregate the data in a dict
 data = {

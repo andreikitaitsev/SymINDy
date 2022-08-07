@@ -1,5 +1,7 @@
 import operator
 import random
+import sys
+import logging
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -15,56 +17,99 @@ class SymINDy:
         self,
         ngen=5,
         ntrees=5,
-        mutpb=0.8,
-        cxpb=0.7,
         dims=2,
         library_name="generalized",
-        is_time_dependent=False,
-        seed=0,
-        score_metrics=r2_score,
-        score_metrics_kwargs=None,
-        nc=0,
-        n_individuals=300,
-        sindy_kwargs=None,
-        verbose=False,
         sparsity_coef=1,
-    ):
+        n_individuals=300,
+        max_depth = 2,
+        mutpb=0.8,
+        cxpb=0.7,
+        score_metric=r2_score,
+        score_metric_kwargs=None,
+        sindy_kwargs=None,
+        nc=0,
+        seed=0,
+        is_time_dependent=False,
+        verbose=False
+        ):
         """
-        Inputs:
-                score_metrics - the metrics to use in pySINDy model.score. Default - None, uses
-                        R2 coefficient of determination (see sindy model score https://pysindy.readthedocs.io/en/latest/api/pysindy.html
-                        and sklearn model evaluation for reference, https://scikit-learn.org/stable/modules/model_evaluation).
-                score_metrics_kwargs - key value arguments for scoring function. If None, uses default pySINDy score kwargs.
-                is_time_dependent - bool flag, add time as an independent variable, if necessary. Default False
+        Symbolic Identification of Nonlinear Dynamics. 
+        Use symbolic regression and SINDy to reconstruct a dynamical system from the observational data.
+
+        Parameters:
+        ----------
+            ngen - int, number of generations in the evolution process.
+            ntrees - int, number of trees defining an individual. Defualt=5
+            dims - int, dimensionality of the input system (number of equations). Default = 2
+            library_name - str, name of the library to use in SymINDy. Defines the nature of functions used in the 
+                evolution process. Possible values: 
+                    "generalized" - polynomials and fourier libraries
+                    "polynomial"
+                    "fourier" - trigonometric functions
+            sparsity_coef - float, sparsity coefficient for SymINDy evaluation function. Is a measure derived from the inverse of
+                non-zero number of nodes in a primitive set representing an individual. Default = 1
+            n_individuals - int, number of individuals in the population
+            max_depth - int, max depth of symbolic tree
+            mutpb - float, probability of mutating an individual in evolution process. Default = 0.8
+            cxpb – float, probability of mating two individuals in evolution process. Default = 0.7
+            score_metric - sklearn.metric object instance, metric to use in pySINDy model.score. Default - None, uses
+                    R2 coefficient of determination.
+            score_metric_kwargs - dict, key value arguments for scoring function. If None, uses default pySINDy score kwargs.
+            sindy_kwargs - dict, key value arguments for to instanciate SINDy class with.
+            nc - int, number of numeric constants associated to individual. Default = 0. Experimental parameter.
+            seed - float or int, random seed for reproducibility. Default = 0.
+            verbose - bool, if True, print metric after fitting each generation. Default = False.
+            is_time_dependent - bool flag, add time as an independent variable, if necessary. Default False. 
+                ! For now is not implemented!
+        
+        Attributes:
+        ----------
 
         """
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO, 
+            format='%(levelname)s %(message)s')
         self.ngen = ngen
         self.ntrees = ntrees
-        self.mutpb = mutpb
-        self.cxpb = cxpb
         self.dims = dims
         self.library_name = library_name
+        self.sparsity_coef = sparsity_coef
+        self.n_individuals = n_individuals
+        self.max_depth = max_depth
+        self.mutpb = mutpb
+        self.cxpb = cxpb
+        self.score_metric = score_metric
+        self.score_metric_kwargs = score_metric_kwargs
+        self.sindy_kwargs = sindy_kwargs
+        self.nc = nc
         self.seed = seed
         self.is_time_dependent = is_time_dependent
-        self.score_metrics = score_metrics
-        self.score_metrics_kwargs = score_metrics_kwargs
-        self.nc = nc
-        self.n_individuals = n_individuals
-        self.sindy_kwargs = sindy_kwargs
-        self.sparsity_coef = sparsity_coef
         self.verbose = verbose
+        if self.verbose:
+            logging.info(self.__class__.__name__ + '__init__')
+
 
     def configure_DEAP(
-        self, ntrees=5, nc=0, dimensions=2, max_depth=2, is_time_dependent=False
-    ):
+        self, 
+        ntrees=5, 
+        nc=0, 
+        dimensions=2, 
+        max_depth=2, 
+        is_time_dependent=False
+        ):
         """
-        Inputs:
+        Create DEAP setup. For detailed example, see https://deap.readthedocs.io/en/master/examples/ga_onemax.html
+        Parameters:
                 ntrees -int, number of trees defining an individual. Defualt=5.
                 nc -int, number of nonlinear parameters (symbolic constants
                     associated to the individual). Defualt=0.
                 dimensions - int, read from txt files as n columns
+                max_depth - int, max depth of symbolic tree
                 is_time_dependent - flag, is the system is time-dependent
+        Returns:
+            toolbox, creator, pset, history - deap object instances. See the link above
         """
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'configure_DEAP')
 
         def _random_mating_operator(ind1, ind2):
             roll = random.random()
@@ -83,14 +128,14 @@ class SymINDy:
                 return gp.mutNodeReplacement(individual, pset=pset)
 
         def _rename_args(pset, nc, dimensions, is_time_dependent):
-            """Rename arguments in primitive set.
-            Inputs:
+            """Rename arguments in a primitive set.
+            Parameters:
                 pset - primitive set
                 nc -int, number of nonlinear parameters (symbolic constants
                     associated to the individual).
                 dimensions - int, read from txt files as n columns
-                is_time_dependent - flag, is the system is time-dependent
-            Outputs:
+                is_time_dependent - flag, if the system is time-dependent
+            Returns:
                 pset - primitive set with renamed arguments.
                     (first nc arguments come from nc, from nc to
                     dimensions + nc - dimensions, last argument is time if
@@ -101,17 +146,18 @@ class SymINDy:
                 argnames["ARG{}".format(dim)] = "x{}".format(dim)
             for i in range(nc):
                 argnames["ARG{}".format(i + dimensions)] = "x{}".format(i)
-            if is_time_dependent:
-                argnames["ARG{}".format(len(argnames))] = "t"
+            #if is_time_dependent:
+            #    argnames["ARG{}".format(len(argnames))] = "t"
             pset.renameArguments(**argnames)
             return pset
 
         def _create_toolbox(pset, ntrees, max_depth=2):
             """Create a deap toolbox, creator and history objects.
-            Inputs:
+            Parameters:
                 pset - primitive set to register in the toolbox
                 ntrees - number of trees of symbolic expressions per subindividual
-            Outputs:
+                max_depth - int, max depth of symbolic tree
+            Returns:
                 toolbox, creator, history
             """
             from deap import (
@@ -180,21 +226,22 @@ class SymINDy:
         max_depth,
         toolbox,
         x_train,
-        x_dot_train,
-        time_rec_obs=None,
-        sindy_kwargs=None,
-        score_metrics=None,
-        score_metrics_kwargs=None,
-        flag_solution=False,
-        tr_te_ratio=None,
-        sparsity_coef=1,
-    ):
+        x_dot_train = None,
+        time_rec_obs = None,
+        sindy_kwargs = None,
+        score_metric = None,
+        score_metric_kwargs = {},
+        flag_solution = False,
+        tr_te_ratio = 0.8,
+        sparsity_coef = 1,
+        ):
         """Fitness function to evaluate symbolic regression.
         For additional documentation see SINDy model docs
         https://pysindy.readthedocs.io/en/latest/api/pysindy.html#module-pysindy.pysindy
-        Inputs:
+        Parameters:
                 individual - list of subindividuals (with invalid fitness)
                 ntrees - number of trees of symbolic expressions per subindividual
+                max_depth - int, max depth of symbolic tree
                 toolbox - deap base toolbox instance
                 x_train - np array, training data
                 x_dot_train - precomputed derivatives of the training data, optional. Defualt=None, no
@@ -202,12 +249,16 @@ class SymINDy:
                 time_rec_obs - (float, numpy array of shape (n_samples,), or list of numpy arrays, optional (default None)) –
                         If t is a float, it specifies the timestep between each sample.
                         If array-like, it specifies the time at which each sample was collected.
+                score_metric - sklearn.metric object instance, metric to use in pySINDy model.score. Default - None, uses
+                    R2 coefficient of determination.
+                score_metric_kwargs - dict, key value arguments for scoring function. Default - {}.
+                flag_solution - bool flag. If True, return the best fitted model.
                 sindy_kwargs - dictionary with kwargs for SINDY. Default=None, no kwargs
                 tr_te_ratio -  float, ratio of train vs test split of the training data when fitting pysindy model.
-                    If None, no train test split. If not none, no train test split is doen. Default = 0.8
+                    If None, no train test split. If not none, no train test split is done. Default = 0.8
                 sparsity_coef - float, coefficient to multiply the sparsity penatly with (n_zero_nodes/max_n_nodes).
-                    Default=1
-        Outputs:
+                    Default = 1
+        Returns:
                 [fitness] - list with fitness value. NB - DEAP requires output to be iterable (so, it shall be
                         a tuple or a list).
         """
@@ -246,8 +297,8 @@ class SymINDy:
             x_train,
             time_rec_obs,
             x_dot_train,
-            score_metrics,
-            score_metrics_kwargs,
+            score_metric,
+            score_metric_kwargs,
         ):
             """Get the score of the sindy model fitted with
             symbolic expressions generated by DEAP"""
@@ -259,17 +310,17 @@ class SymINDy:
                 x_dot=x_dot_train,
                 u=None,
                 multiple_trajectories=False,
-                metric=score_metrics,
-                **score_metrics_kwargs
+                metric=score_metric,
+                **score_metric_kwargs
             )
             return model, fitness
 
         if sindy_kwargs is None:
             sindy_kwargs = {}
-        if score_metrics is None:
-            score_metrics = r2_score
-        if score_metrics_kwargs is None:
-            score_metrics_kwargs = {}
+        if score_metric is None:
+            score_metric = r2_score
+        if score_metric_kwargs is None:
+            score_metric_kwargs = {}
 
         validate_input(x_train)
 
@@ -292,8 +343,8 @@ class SymINDy:
                 x_train_te,
                 time_te,
                 x_dot_train_te,
-                score_metrics,
-                score_metrics_kwargs,
+                score_metric,
+                score_metric_kwargs,
             )
         else:
             model = fit_sindy_model(model, x_train, x_dot_train, time_rec_obs)
@@ -302,8 +353,8 @@ class SymINDy:
                 x_train,
                 time_rec_obs,
                 x_dot_train,
-                score_metrics,
-                score_metrics_kwargs,
+                score_metric,
+                score_metric_kwargs,
             )
 
         # Sparsity penalty - coerce the model to keep nnodes as small as possible
@@ -344,7 +395,7 @@ class SymINDy:
         Takes in a population and evolves it in place using the varAnd() method.
         Returns the optimized population and a Logbook with the statistics of the evolution.
 
-        Inputs:
+        Parameters:
                 population – A list of individuals
                 toolbox – A DEP Toolbox class instance, that contains the evolution operators.
                 cxpb – The probability of mating two individuals.
@@ -354,7 +405,7 @@ class SymINDy:
                 stats – A DEAP Statistics object that is updated inplace. Default=None.
                 halloffame – A DEAP HallOfFame object that will contain the best individuals. Default=None.
                 verbose – Whether or not to log the statistics. Default=__debug__.
-        Outputs:
+        Returns:
                 population: The final population
                 logbook - a logbook object with the statistics of the evolution.
 
@@ -371,13 +422,13 @@ class SymINDy:
             """
             Part of an evolutionary algorithm applying only the variation part (crossover and mutation).
             See https://deap.readthedocs.io/en/master/api/algo.html#deap.algorithms.varAnd for the reference.
-            Inputs:
+            Parameters:
                     population - a list of individuals to vary. It is recommended that the population is created
                             with the toolbox.register method of toolbox object instance from DEAP
                     toolbox_local
                     cxpb - float, is the probability with which two individuals are crossed
                     mutpb - float, is the probability for mutating an individual
-            Outputs:
+            Returns:
                     offspring - a "list" of varied individuals that are independent of their parents (deepcopied)
                     halloffame - deap halloffame object. Contains the best individual that
                         ever lived in the popultion (best over all generations)
@@ -470,7 +521,21 @@ class SymINDy:
         return mstats
 
     def fit(self, x_train, x_dot_train=None, time_rec_obs=None):
-        """Train SymINDy model on the train data."""
+        """
+        Train SymINDy model on the train set data.
+        Parameters:
+            x_train - numpy array, training data, observations of dynamical system
+            x_dot_train - numpy array, precomputed derivatives of the training data, optional. Defualt=None, no
+                    precomputed derivatives (SINDY computes it using specified differentiation method).  
+            time_rec_obs - (float, numpy array of shape (n_samples,), or list of numpy arrays, optional (default None)) –
+                If t is a float, it specifies the timestep between each sample.
+                If array-like, it specifies the time at which each sample was collected.
+        Returns:
+            self
+        """
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'fit')
+
         # set random seed
         random.seed(self.seed)
 
@@ -490,8 +555,8 @@ class SymINDy:
             x_dot_train=x_dot_train,
             time_rec_obs=time_rec_obs,
             sindy_kwargs=self.sindy_kwargs,
-            score_metrics=self.score_metrics,
-            score_metrics_kwargs=self.score_metrics_kwargs,
+            score_metric=self.score_metric,
+            score_metric_kwargs=self.score_metric_kwargs,
             flag_solution=False,
             tr_te_ratio=0.8,
             sparsity_coef=self.sparsity_coef,
@@ -508,8 +573,8 @@ class SymINDy:
             x_dot_train=x_dot_train,
             time_rec_obs=time_rec_obs,
             sindy_kwargs=self.sindy_kwargs,
-            score_metrics=self.score_metrics,
-            score_metrics_kwargs=self.score_metrics_kwargs,
+            score_metric=self.score_metric,
+            score_metric_kwargs=self.score_metric_kwargs,
             flag_solution=True,
             tr_te_ratio=0.8,
             sparsity_coef=self.sparsity_coef,
@@ -558,91 +623,108 @@ class SymINDy:
         self.final_model.print()
         print("\n")
 
-    def predict(self, x0, time, simulate_kwargs=None, predict_kwargs=None):
+        return self
+
+    def predict(self, x0, time, simulate_kwargs = {}, predict_kwargs = {}):
         """
         Predict x and xdot using fitted (trained) model.
         Note, that if you use the model with train-test sets, x0 shall be the first time
         observation of the test set.
-        Inputs:
+        Parameters:
             x0 - initial condition for the prediction of xtest.
             time - int or array, time corresponding to predictions
-            simulate_kwargs - dict of args for pysindy.simulate. Default=None, no kwargs
-            predict_kwargs - dict of args for pysindy.predict. Default=None, no kwargs
-        Outputs:
+            simulate_kwargs - dict of args for pysindy.simulate. Default = {}
+            predict_kwargs - dict of args for pysindy.predict. Default = {}
+        Returns:
             x_te_pred - predicted x (for the rime interval time)
             xdot_te_pred - xdot predicted from x_te_pred
         """
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'predict')
         # set random seed
         random.seed(self.seed)
-        if simulate_kwargs is None:
-            simulate_kwargs = {}
-        if predict_kwargs is None:
-            predict_kwargs = {}
+
         # simulate xtest from the initial condition
         x_te_pred = self.final_model.simulate(x0, time, **simulate_kwargs)
+        
         # predict xdot from x_te_pred
         xdot_te_pred = self.final_model.predict(x_te_pred)
+
         return x_te_pred, xdot_te_pred
 
-    @staticmethod
-    def score(x, x_pred, xdot, xdot_pred, metric=None, metric_kwargs=None):
+    def score(self, x, x_pred, xdot, xdot_pred, metric = r2_score, metric_kwargs={}):
         """
-        Computes the specified score between (x, x_pred) and (xdot and xdot_pred).
-        Inputs:
-            x
-            x_pred
-            xdot
-            xdot_pred
-            metric - metric to use
-            kwargs - kwrargs for the metric
-        Outputs:
+        Compute the metric between (x, x_pred) and (xdot and xdot_pred).
+        Parameters:
+            x - numpy array, observations of dynamical system
+            x_pred - numpy array, predicted observations of dynamical system
+            xdot - numpy array, derivatives of observations of dynamical system
+            xdot_pred - numpy array, predicted derivatives of observations of dynamical system
+            metric - skearn.metric class
+            kwargs - kw args for the metric
+        Returns:
             x_score - score for x prediction
             xdot_score - score for xdot prediction (None if xdot is None)
         """
-        if metric is None:
-            metric = r2_score
-        if metric_kwargs is None:
-            metric_kwargs = {}
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'score')
         x_score = metric(x, x_pred, **metric_kwargs)
         try:
             xdot_score = metric(xdot, xdot_pred, **metric_kwargs)
         except ValueError:
             xdot_score = None
+    
         return x_score, xdot_score
 
     def plot_trees(self, show=False):
-        """Plot tree of the best individuals (hof[0])."""
-        expr = self.hof[0]
-        fig, axs = plt.subplots(
-            int(np.floor(self.ntrees / 2)),
-            int(np.ceil(self.ntrees / 2)),
-            figsize=(16, 9),
-        )
-        for i, ax in zip(range(self.ntrees), np.ravel(axs)):
-            nodes, edges, labels = gp.graph(expr[i])
-            g = nx.Graph()
-            g.add_nodes_from(nodes)
-            g.add_edges_from(edges)
-            pos = nx.nx_agraph.pygraphviz_layout(g, prog="dot")
-            nx.draw(
-                g,
-                pos,
-                with_labels=True,
-                ax=ax,
-                labels=labels,
-                node_color="#99CCFF",
-                edge_color="k",
-                font_size=20,
-                font_color="k",
+        """Plot the tree of the best individuals (hof[0]).
+        Note, this function requires pygraphviz to be installed which is often installed separately
+        for windows. Issue: https://stackoverflow.com/questions/40809758/howto-install-pygraphviz-on-windows-10-64bit
+        Parameters:
+            show - bool, if True, show the figure.
+        Returns:
+            (fig, ax) - tuple of matplotlib figure and axis objects or None in case of error.
+        """
+        if self.verbose:
+            logging.info(self.__class__.__name__ + 'plot_trees')
+        try:
+            expr = self.hof[0]
+            fig, axs = plt.subplots(
+                int(np.floor(self.ntrees / 2)),
+                int(np.ceil(self.ntrees / 2)),
+                figsize=(16, 9),
             )
-            ax.set_axis_off()
-        plt.margins(0.2)
-        plt.axis("off")
-        plt.tight_layout()
-        if show == True:
-            plt.show()
-        return fig, ax
+            for i, ax in zip(range(self.ntrees), np.ravel(axs)):
+                nodes, edges, labels = gp.graph(expr[i])
+                g = nx.Graph()
+                g.add_nodes_from(nodes)
+                g.add_edges_from(edges)
+                pos = nx.nx_agraph.pygraphviz_layout(g, prog="dot")
+                nx.draw(
+                    g,
+                    pos,
+                    with_labels=True,
+                    ax=ax,
+                    labels=labels,
+                    node_color="#99CCFF",
+                    edge_color="k",
+                    font_size=20,
+                    font_color="k",
+                )
+                ax.set_axis_off()
+            plt.margins(0.2)
+            plt.axis("off")
+            plt.tight_layout()
+            if show == True:
+                plt.show()
+            return (fig, ax)
+        except Exception as exe:
+            logging.error('Failed plotting the trees. Most likely, you do not have pygraphviz installed.\
+            Original Error: {}'.format(exe))
+            return None, None
 
 
+
+# disable running file as main
 if __name__ == "__main__":
     pass
