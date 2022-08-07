@@ -217,8 +217,12 @@ Dear developer, before pushing, remember to run
  pre-commit run --all-files
 ```
 
-## Relevant works
+## Notes
+- *plot_trees* method requires requires pygraphviz to be installed which is often installed separately. This may not be straightforawrd for windows. 
+    https://stackoverflow.com/questions/40809758/howto-install-pygraphviz-on-windows-10-64bit
+- *is_time_dependent* attribute is in a test mode and does not generally work. This parameter is only present in *is_time_dependent* branch and is missing in the           *main* branch
 
+## Relevant works
 - [Orbital Anomaly Reconstruction Using Deep Symbolic Regression](https://www.researchgate.net/publication/344475621_Orbital_Anomaly_Reconstruction_Using_Deep_Symbolic_Regression)
 - [DEAP: Evolutionary Algorithms Made Easy](https://www.jmlr.org/papers/volume13/fortin12a/fortin12a.pdf)
 - [PySINDy: A Python package for the sparse identification of nonlinear dynamical systems from data.](https://arxiv.org/abs/2004.08424)
