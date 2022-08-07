@@ -29,7 +29,6 @@ class SymINDy:
         sindy_kwargs=None,
         nc=0,
         seed=0,
-        is_time_dependent=False,
         verbose=False
         ):
         """
@@ -59,9 +58,6 @@ class SymINDy:
             nc - int, number of numeric constants associated to individual. Default = 0. Experimental parameter.
             seed - float or int, random seed for reproducibility. Default = 0.
             verbose - bool, if True, print metric after fitting each generation. Default = False.
-            is_time_dependent - bool flag, add time as an independent variable, if necessary. Default False. 
-                ! For now is not implemented!
-        
         Attributes:
         ----------
 
@@ -82,7 +78,6 @@ class SymINDy:
         self.sindy_kwargs = sindy_kwargs
         self.nc = nc
         self.seed = seed
-        self.is_time_dependent = is_time_dependent
         self.verbose = verbose
         if self.verbose:
             logging.info(self.__class__.__name__ + '__init__')
@@ -93,8 +88,7 @@ class SymINDy:
         ntrees=5, 
         nc=0, 
         dimensions=2, 
-        max_depth=2, 
-        is_time_dependent=False
+        max_depth=2
         ):
         """
         Create DEAP setup. For detailed example, see https://deap.readthedocs.io/en/master/examples/ga_onemax.html
@@ -104,7 +98,6 @@ class SymINDy:
                     associated to the individual). Defualt=0.
                 dimensions - int, read from txt files as n columns
                 max_depth - int, max depth of symbolic tree
-                is_time_dependent - flag, is the system is time-dependent
         Returns:
             toolbox, creator, pset, history - deap object instances. See the link above
         """
@@ -127,27 +120,21 @@ class SymINDy:
             elif roll < 2.66:
                 return gp.mutNodeReplacement(individual, pset=pset)
 
-        def _rename_args(pset, nc, dimensions, is_time_dependent):
+        def _rename_args(pset, nc, dimensions):
             """Rename arguments in a primitive set.
             Parameters:
                 pset - primitive set
                 nc -int, number of nonlinear parameters (symbolic constants
                     associated to the individual).
                 dimensions - int, read from txt files as n columns
-                is_time_dependent - flag, if the system is time-dependent
             Returns:
                 pset - primitive set with renamed arguments.
-                    (first nc arguments come from nc, from nc to
-                    dimensions + nc - dimensions, last argument is time if
-                    is_time_dependent is True.)
             """
             argnames = {}
             for dim in range(dimensions):
                 argnames["ARG{}".format(dim)] = "x{}".format(dim)
             for i in range(nc):
                 argnames["ARG{}".format(i + dimensions)] = "x{}".format(i)
-            #if is_time_dependent:
-            #    argnames["ARG{}".format(len(argnames))] = "t"
             pset.renameArguments(**argnames)
             return pset
 
@@ -207,12 +194,11 @@ class SymINDy:
         lib = Library(
             nc,
             dimensions,
-            is_time_dependent=self.is_time_dependent,
             library_name=self.library_name,
         )
         pset = lib()
 
-        pset = _rename_args(pset, nc, dimensions, self.is_time_dependent)
+        pset = _rename_args(pset, nc, dimensions)
 
         toolbox, creator, history = _create_toolbox(
             pset, ntrees, max_depth=self.max_depth
