@@ -1,20 +1,22 @@
-# TODO UPDATE
+# syntax=docker/dockerfile:1
 FROM ubuntu:20.04
-RUN apt update
-WORKDIR symindy
-# optional
-#RUN apt install software-properties-common -y
+RUN apt-get update
+RUN apt-get install software-properties-common -y
+RUN add-apt-repository ppa:deadsnakes/ppa -y
+RUN apt-get install python3.9 -y
+RUN apt-get install python3-pip -y
 
-RUN apt install python3.9 -y
-RUN apt install python3-pip -y
-# igraphviz requres a separate installation
-RUN apt install graphviz | yes n
+# igraphviz requres a separate installation - takes long
+#RUN apt-get install graphviz | yes n
+
+WORKDIR /symindy
 
 COPY requirements.txt .
 COPY ./src ./src
 COPY ./*.py .
 
-RUN pip3 install --upgrade pip
+# downgrading of setuptools is required by DEAP
+RUN pip3 install setuptools==58.0.0
 RUN pip3 install -r requirements.txt
 RUN pip3 install -e .
 

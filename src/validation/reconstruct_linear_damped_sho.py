@@ -1,15 +1,12 @@
 """Test the quality of the reconstructuion and prediction of different dynamical systems."""
-from tkinter import N
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy.utils.odes as odes
 from pathlib import Path
 
 from symindy.symindy import SymINDy
-from systems import non_linear_systems as nl
 from systems.dynamical_system import DynamicalSystem
-from systems.non_linear_systems import lorenz
-from validation.utils import plot2d, plot3d, split
+from validation.utils import plot2d, split
 
 
 ## linear_damped_SHO
