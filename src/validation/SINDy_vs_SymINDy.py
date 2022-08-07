@@ -8,8 +8,7 @@ import pysindy as ps
 from symindy.symindy import SymINDy
 from systems import non_linear_systems as nl
 from systems.dynamical_system import DynamicalSystem
-from systems.non_linear_systems import lorenz
-from validation.utils import plot2d, plot3d, plot_compare_sindy_simindy, split
+from validation.utils import plot_compare_sindy_simindy, split
 
 ## myspring
 #    xdot = v
