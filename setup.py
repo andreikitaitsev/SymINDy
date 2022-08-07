@@ -7,6 +7,8 @@ setup(name='symindy',
     author_email="andre.kit17@gmail.com, matteomanzi09@gmail.com ",
     keywords="pysindy, symbolic regression, symindy, dynamical system",
     package_dir={"": "src"},
+    url = "https://github.com/andreikitaitsev/SymINDy",
     packages=find_packages(where="src"),
-    python_requires="<=3.9.13"
+    python_requires="<=3.9.13",
+    license = "MIT"
     )
