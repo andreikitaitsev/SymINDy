@@ -26,7 +26,7 @@ class DynamicalSystem:
             t_end - int, end of observation time
             n_samples - int, number of samples if observations
         Returns:
-            x, xdor - numpy array, simulated observations of dynamical system 
+            x, xdor - numpy array, simulated observations of dynamical system
                 and their derivatives.
         '''
         t_eval = np.linspace(t_start, t_end, n_samples, endpoint=False)

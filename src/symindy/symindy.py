@@ -1,14 +1,15 @@
+import logging
 import operator
 import random
 import sys
-import logging
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pysindy as ps
 from deap import base, creator, gp, tools
-
 from sklearn.metrics import r2_score
+
 from symindy.library import Library
 
 
@@ -32,7 +33,7 @@ class SymINDy:
         verbose=False
         ):
         """
-        Symbolic Identification of Nonlinear Dynamics. 
+        Symbolic Identification of Nonlinear Dynamics.
         Use symbolic regression and SINDy to reconstruct a dynamical system from the observational data.
 
         Parameters:
@@ -40,8 +41,8 @@ class SymINDy:
             ngen - int, number of generations in the evolution process.
             ntrees - int, number of trees defining an individual. Defualt=5
             dims - int, dimensionality of the input system (number of equations). Default = 2
-            library_name - str, name of the library to use in SymINDy. Defines the nature of functions used in the 
-                evolution process. Possible values: 
+            library_name - str, name of the library to use in SymINDy. Defines the nature of functions used in the
+                evolution process. Possible values:
                     "generalized" - polynomials and fourier libraries
                     "polynomial"
                     "fourier" - trigonometric functions
@@ -62,7 +63,7 @@ class SymINDy:
         ----------
 
         """
-        logging.basicConfig(stream=sys.stdout, level=logging.INFO, 
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO,
             format='%(levelname)s %(message)s')
         self.ngen = ngen
         self.ntrees = ntrees
@@ -84,10 +85,10 @@ class SymINDy:
 
 
     def configure_DEAP(
-        self, 
-        ntrees=5, 
-        nc=0, 
-        dimensions=2, 
+        self,
+        ntrees=5,
+        nc=0,
+        dimensions=2,
         max_depth=2
         ):
         """
@@ -147,9 +148,8 @@ class SymINDy:
             Returns:
                 toolbox, creator, history
             """
-            from deap import (
-                creator,
-            )  # TODO figure out why the globally imported creator is not seen inside this function.
+            from deap import \
+                creator  # TODO figure out why the globally imported creator is not seen inside this function.
 
             creator.create("FitnessMax", base.Fitness, weights=(1.0,))
             # subindividual is a primitive tree which is populated from pset
@@ -262,7 +262,7 @@ class SymINDy:
             for i in range(ntrees):
                 sr_functions.append(toolbox.compile(expr=individual[i]))
             library = ps.CustomLibrary(library_functions=sr_functions)
-            
+
             stlsq_optimizer = ps.STLSQ(threshold=.01, alpha=.5)
             model = ps.SINDy(feature_library=library, **sindy_kwargs, optimizer=stlsq_optimizer)
             return model
@@ -512,7 +512,7 @@ class SymINDy:
         Parameters:
             x_train - numpy array, training data, observations of dynamical system
             x_dot_train - numpy array, precomputed derivatives of the training data, optional. Defualt=None, no
-                    precomputed derivatives (SINDY computes it using specified differentiation method).  
+                    precomputed derivatives (SINDY computes it using specified differentiation method).
             time_rec_obs - (float, numpy array of shape (n_samples,), or list of numpy arrays, optional (default None)) –
                 If t is a float, it specifies the timestep between each sample.
                 If array-like, it specifies the time at which each sample was collected.
@@ -632,7 +632,7 @@ class SymINDy:
 
         # simulate xtest from the initial condition
         x_te_pred = self.final_model.simulate(x0, time, **simulate_kwargs)
-        
+
         # predict xdot from x_te_pred
         xdot_te_pred = self.final_model.predict(x_te_pred)
 
@@ -659,7 +659,7 @@ class SymINDy:
             xdot_score = metric(xdot, xdot_pred, **metric_kwargs)
         except ValueError:
             xdot_score = None
-    
+
         return x_score, xdot_score
 
     def plot_trees(self, show=False):

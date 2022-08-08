@@ -1,11 +1,13 @@
-from unittest import TestCase
-from symindy.symindy import SymINDy
-import deap
-import numpy as np
 from pathlib import Path
+from unittest import TestCase
+
+import deap
+import matplotlib
+import numpy as np
 import pysindy
 from sklearn.metrics import r2_score
-import matplotlib
+
+from symindy.symindy import SymINDy
 
 
 class TestSymINDy(TestCase):
@@ -51,13 +53,13 @@ class TestSymINDy(TestCase):
     def test_score(self):
         x_te_pred, xdot_te_pred = self.symindy.predict(self.x_te[0], self.time_te)
         round = lambda x: np.round(x, 5)
-        score_symindy_x, score_symindy_xdot = map(round, self.symindy.score(self.x_te, x_te_pred, 
+        score_symindy_x, score_symindy_xdot = map(round, self.symindy.score(self.x_te, x_te_pred,
             self.xdot_te, xdot_te_pred))
         score_x = round(r2_score(self.x_te, x_te_pred))
         score_xdot = round(r2_score(self.xdot_te, xdot_te_pred))
         self.assertEqual(score_symindy_x, score_x)
         self.assertEqual(score_symindy_xdot, score_xdot)
-    
+
     def test_plot_trees(self):
         fig, ax = self.symindy.plot_trees()
         # if pygraphviz can be successfully imported

@@ -1,10 +1,12 @@
+from pathlib import Path
 from unittest import TestCase
-from systems.dynamical_system import DynamicalSystem
-from systems.non_linear_systems import myspring, lorenz
+
 import deap
 import numpy as np
-from pathlib import Path
 import pysindy.utils.odes as odes
+
+from systems.dynamical_system import DynamicalSystem
+from systems.non_linear_systems import lorenz, myspring
 
 
 class TestLibrary(TestCase):

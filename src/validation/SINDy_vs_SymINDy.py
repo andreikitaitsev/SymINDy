@@ -1,10 +1,12 @@
 '''Reconstruct non-linear dynamical system including sin(x^2) with pySINDy and SymINDy.'''
 """Test the quality of the reconstructuion and prediction of different dynamical systems."""
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import r2_score
-from pathlib import Path
 import pysindy as ps
+from sklearn.metrics import r2_score
+
 from symindy.symindy import SymINDy
 from systems import non_linear_systems as nl
 from systems.dynamical_system import DynamicalSystem
@@ -69,7 +71,7 @@ data = {
     "xdot_te_pred_sindy": xdot_te_pred_sindy
     }
 
-# plot 
+# plot
 fig, axs = plot_compare_sindy_simindy(data, figtitle="SymINDy vs SINDy")
 
 # save the figure

@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 
-
 color1 = "#1874a5"
 color2 = "#e07b39"
 color3 = "#88d269"
@@ -9,7 +8,7 @@ color3 = "#88d269"
 def plot2d(data, fig=None, ax=None, figtitle=None, fontsize=16):
     if fig is None and ax is None:
         fig, axs = plt.subplots(2, figsize=(12,8), sharex=True)
-    
+
     # plot x
     axs[0].plot(data["time"], data["x_te"][:,0], color=color1, linestyle='dashed')
     axs[0].plot(data["time"], data["x_te"][:,1], color=color1, linestyle='solid')
@@ -37,7 +36,7 @@ def plot2d(data, fig=None, ax=None, figtitle=None, fontsize=16):
         transform=axs[1].transAxes)
     if figtitle is not None:
         fig.suptitle(figtitle, fontsize=fontsize+4)
-          
+
     return fig, axs
 
 
@@ -66,7 +65,7 @@ def plot3d(data, fig=None, ax=None, figtitle=None,fontsize=16):
     ax2.set_xlabel("x", fontsize=fontsize)
     ax2.set_ylabel("y", fontsize=fontsize)
     ax2.set_zlabel("z",  fontsize=fontsize)
-    
+
     # x metric
     fig.text(0.5, 0.9,'{}(x): {:.2f}'.format(data["x_metric"]["name"], data["x_metric"]["value"]),
           bbox={'facecolor':'white','alpha':1,'edgecolor':'none','pad':1},
@@ -81,7 +80,7 @@ def plot3d(data, fig=None, ax=None, figtitle=None,fontsize=16):
 def plot_compare_sindy_simindy(data, fig=None, ax=None, figtitle=None, fontsize=16):
     if fig is None and ax is None:
         fig, axs = plt.subplots(2, figsize=(12,8), sharex=True)
-    
+
     # plot original systems and predictions os symindy and pysindy
     # x
     axs[0].plot(data["x_te"][:,0], color=color1, linestyle='dashed')
@@ -94,7 +93,7 @@ def plot_compare_sindy_simindy(data, fig=None, ax=None, figtitle=None, fontsize=
     axs[0].plot(data["x_te_pred_sindy"][:,1], color=color3, linestyle='solid')
 
     axs[0].set_title("x")
-    
+
     # x dot
     axs[1].plot(data["xdot_te"][:,0], color=color1, linestyle='dashed')
     axs[1].plot(data["xdot_te_pred_symindy"][:,0], color=color2, linestyle='dotted')

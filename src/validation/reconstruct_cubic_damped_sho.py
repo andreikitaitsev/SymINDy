@@ -1,8 +1,9 @@
 """Test the quality of the reconstructuion and prediction of different dynamical systems."""
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pysindy.utils.odes as odes
-from pathlib import Path
 
 from symindy.symindy import SymINDy
 from systems.dynamical_system import DynamicalSystem
