@@ -1,5 +1,5 @@
 ---
-title: "SynINDy: Symbolic Identification of Nonlinear Dynamics"
+title: "SymINDy: Symbolic Identification of Nonlinear Dynamics"
 tags:
   - Python
   - Symbolic Regression
