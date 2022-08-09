@@ -31,7 +31,7 @@ white-box models with both generalizing and extrapolating capabilities.
 
 Leveraging the powerful modelling capacity of symbolic regression and the
 sparse representability of dynamical systems, the python library **SymINDy** (Symbolic Identification of Nonlinear Dynamics)
-allows one to generate a symbolic representation of deterministic dynamica systems from state observations only.
+allows one to generate a symbolic representation of deterministic dynamical systems from state observations only.
 
 # Statement of need
 
@@ -79,7 +79,7 @@ $$
 \end{bmatrix}
 $$
 
-$\boldsymbol\Xi$ is a sparse matrix of constant coefficients, which is computed using the Sequential Thresholded Least Squares (STLSQ) algorithm. Such algorithm is performed for each individual evaluation of the parallelizable genetic programming-based combinatorial seach in the space of symbolic expressions.
+$\boldsymbol\Xi$ is a sparse matrix of constant coefficients, which is computed using the Sequential Thresholded Least Squares (STLSQ) algorithm. Such algorithm is performed for each individual evaluation of the parallelizable genetic programming-based combinatorial search in the space of symbolic expressions.
 
 # Acknowledgements
 
