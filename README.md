@@ -139,7 +139,7 @@ However, this time we focus on the original system first.
     (x1)' = - -4.518 x0 - 0.372 x1 + 9.123*sin(x0**2)
 
 As we can see, the argument passed to sine is also non-linear. This makes it impossible for SINDy to reconstruct the system.
-But SymINDy can easyliy do it. Let's run the code `reconstruct_myspring.py` and see how it performs!
+But SymINDy can easily do it. Let's run the code `reconstruct_myspring.py` and see how it performs!
 
 Reconstructed equation:
 
@@ -249,7 +249,7 @@ Dear developer, before pushing, remember to run
 
 ## Notes
 
-- _plot_trees_ method requires requires pygraphviz to be installed which is often installed separately. This may not be straightforawrd for windows.
+- _plot_trees_ method requires requires pygraphviz to be installed which is often installed separately. This may not be straightforward for windows.
   https://stackoverflow.com/questions/40809758/howto-install-pygraphviz-on-windows-10-64bit
 - _is_time_dependent_ attribute is in a test mode and does not generally work. This parameter is only present in _is_time_dependent_ branch and is missing in the _main_ branch
 
