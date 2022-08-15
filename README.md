@@ -2,6 +2,11 @@
 
 This library is a generalization of [SINDy](https://github.com/dynamicslab/pysindy), to be used for the reconstruction of dynamical systems with strong nonlinearities, which require the introduction of a combinatorial search in the elementary functions associated with the linear regression part of SINDy.
 
+# Video Tutorial
+
+Click here to see the Video Tutorial:
+
+[![IMAGE ALT TEXT HERE](./figures/youtube.jpg)](https://www.youtube.com/watch?v=EzvJ7sddJCc)
 # About
 
 Let's simulate some well-known dynamical systems and try to reconstruct them with SymINDy.

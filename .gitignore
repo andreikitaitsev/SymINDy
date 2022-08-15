@@ -6,7 +6,6 @@ __pycache__/
 
 # figures
 *.png
-*.jpg
 
 # swp vim files
 *.swp
